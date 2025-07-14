@@ -308,19 +308,19 @@ async function loadReads(append = false) {
                     <td>
                         <div class="d-flex gap-1">
                             ${read.plate_image_path ? `
-                                <img src="/uploads/${read.plate_image_path}" 
+                                <img src="/${read.plate_image_path}" 
                                      alt="Plate Image" 
                                      class="img-thumbnail image-thumbnail" 
                                      style="width: 60px; height: 40px; object-fit: cover; cursor: pointer;" 
-                                     onclick="expandImage('/uploads/${read.plate_image_path}', 'Plate Image - ${read.license_plate}')"
+                                     onclick="expandImage('/${read.plate_image_path}', 'Plate Image - ${read.license_plate}')"
                                      title="Click to expand plate image">
                             ` : ''}
                             ${read.context_image_path ? `
-                                <img src="/uploads/${read.context_image_path}" 
+                                <img src="/${read.context_image_path}" 
                                      alt="Context Image" 
                                      class="img-thumbnail image-thumbnail" 
                                      style="width: 60px; height: 40px; object-fit: cover; cursor: pointer;" 
-                                     onclick="expandImage('/uploads/${read.context_image_path}', 'Context Image - ${read.license_plate}')"
+                                     onclick="expandImage('/${read.context_image_path}', 'Context Image - ${read.license_plate}')"
                                      title="Click to expand context image">
                             ` : ''}
                             ${!read.plate_image_path && !read.context_image_path ? '<span class="text-muted">No images</span>' : ''}
@@ -439,11 +439,11 @@ async function showReadDetails(id) {
                             ${read.plate_image_path ? `
                                 <div class="text-center">
                                     <div class="mb-2">
-                                        <img src="${read.plate_image_path}" 
+                                        <img src="/${read.plate_image_path}" 
                                              alt="Plate Image" 
                                              class="img-thumbnail" 
                                              style="max-width: 200px; max-height: 150px; cursor: pointer;" 
-                                             onclick="expandImage('${read.plate_image_path}', 'Plate Image - ${read.license_plate}')">
+                                             onclick="expandImage('/${read.plate_image_path}', 'Plate Image - ${read.license_plate}')">
                                     </div>
                                     <small class="text-muted">Plate Image</small>
                                 </div>
@@ -451,11 +451,11 @@ async function showReadDetails(id) {
                             ${read.context_image_path ? `
                                 <div class="text-center">
                                     <div class="mb-2">
-                                        <img src="${read.context_image_path}" 
+                                        <img src="/${read.context_image_path}" 
                                              alt="Context Image" 
                                              class="img-thumbnail" 
                                              style="max-width: 200px; max-height: 150px; cursor: pointer;" 
-                                             onclick="expandImage('${read.context_image_path}', 'Context Image - ${read.license_plate}')">
+                                             onclick="expandImage('/${read.context_image_path}', 'Context Image - ${read.license_plate}')">
                                     </div>
                                     <small class="text-muted">Context Image</small>
                                 </div>
@@ -583,21 +583,21 @@ function renderTileView(reads) {
                         <div class="row">
                             ${read.plate_image_path ? `
                                 <div class="col-6">
-                                    <img src="/uploads/${read.plate_image_path}" 
+                                    <img src="/${read.plate_image_path}" 
                                          class="img-fluid rounded" 
                                          alt="Plate Image" 
                                          style="max-height: 120px; width: 100%; object-fit: cover; cursor: pointer;"
-                                         onclick="expandImage('/uploads/${read.plate_image_path}', 'Plate Image')">
+                                         onclick="expandImage('/${read.plate_image_path}', 'Plate Image')">
                                     <small class="text-muted d-block text-center mt-1">Plate</small>
                                 </div>
                             ` : ''}
                             ${read.context_image_path ? `
                                 <div class="col-6">
-                                    <img src="/uploads/${read.context_image_path}" 
+                                    <img src="/${read.context_image_path}" 
                                          class="img-fluid rounded" 
                                          alt="Context Image" 
                                          style="max-height: 120px; width: 100%; object-fit: cover; cursor: pointer;"
-                                         onclick="expandImage('/uploads/${read.context_image_path}', 'Context Image')">
+                                         onclick="expandImage('/${read.context_image_path}', 'Context Image')">
                                     <small class="text-muted d-block text-center mt-1">Overview</small>
                                 </div>
                             ` : ''}
