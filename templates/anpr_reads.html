@@ -47,37 +47,63 @@
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">Recent ANPR Reads</h5>
-            <button class="btn btn-sm btn-outline-primary" onclick="loadReads()">
-                <i class="fas fa-sync-alt me-1"></i>
-                Refresh
-            </button>
+            <div class="d-flex align-items-center gap-2">
+                <div class="btn-group" role="group" aria-label="View options">
+                    <button type="button" class="btn btn-sm btn-outline-secondary active" id="listViewBtn" onclick="setView('list')">
+                        <i class="fas fa-list me-1"></i>
+                        List
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="tileViewBtn" onclick="setView('tile')">
+                        <i class="fas fa-th-large me-1"></i>
+                        Tiles
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="loadReads()">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Refresh
+                </button>
+            </div>
         </div>
     </div>
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>License Plate</th>
-                        <th>Camera</th>
-                        <th>Location</th>
-                        <th>Images</th>
-                        <th>Confidence</th>
-                        <th>Hotlist Match</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="readsTable">
-                    <tr>
-                        <td colspan="8" class="text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- List View -->
+        <div id="listView">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>License Plate</th>
+                            <th>Camera</th>
+                            <th>Location</th>
+                            <th>Images</th>
+                            <th>Confidence</th>
+                            <th>Hotlist Match</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="readsTable">
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Tile View -->
+        <div id="tileView" style="display: none;">
+            <div class="row" id="tileContainer">
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="d-flex justify-content-between align-items-center mt-3">
@@ -260,75 +286,82 @@ async function loadReads(append = false) {
             reads = reads.filter(r => r.camera_id === cameraFilter);
         }
         
-        const tableBody = document.getElementById('readsTable');
-        
-        if (reads.length === 0 && !append) {
-            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No reads found</td></tr>';
-            document.getElementById('recordCount').textContent = '0';
-            return;
-        }
-        
-        const rowsHtml = reads.map(read => `
-            <tr class="${read.hotlist_match ? 'table-warning' : ''}">
-                <td>${formatDateTime(read.timestamp)}</td>
-                <td>
-                    <strong>${read.license_plate}</strong>
-                    ${read.hotlist_match ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Hotlist Match"></i>' : ''}
-                </td>
-                <td>${read.camera_id}</td>
-                <td>${read.location}</td>
-                <td>
-                    <div class="d-flex gap-1">
-                        ${read.plate_image_path ? `
-                            <img src="${read.plate_image_path}" 
-                                 alt="Plate Image" 
-                                 class="img-thumbnail image-thumbnail" 
-                                 style="width: 60px; height: 40px; object-fit: cover; cursor: pointer;" 
-                                 onclick="expandImage('${read.plate_image_path}', 'Plate Image - ${read.license_plate}')"
-                                 title="Click to expand plate image">
-                        ` : ''}
-                        ${read.context_image_path ? `
-                            <img src="${read.context_image_path}" 
-                                 alt="Context Image" 
-                                 class="img-thumbnail image-thumbnail" 
-                                 style="width: 60px; height: 40px; object-fit: cover; cursor: pointer;" 
-                                 onclick="expandImage('${read.context_image_path}', 'Context Image - ${read.license_plate}')"
-                                 title="Click to expand context image">
-                        ` : ''}
-                        ${!read.plate_image_path && !read.context_image_path ? '<span class="text-muted">No images</span>' : ''}
-                    </div>
-                </td>
-                <td>
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar ${getConfidenceColor(read.confidence)}" 
-                             role="progressbar" 
-                             style="width: ${read.confidence}%">
-                            ${read.confidence}%
+        // Handle different view types
+        if (currentView === 'list') {
+            const tableBody = document.getElementById('readsTable');
+            
+            if (reads.length === 0 && !append) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No reads found</td></tr>';
+                document.getElementById('recordCount').textContent = '0';
+                return;
+            }
+            
+            const rowsHtml = reads.map(read => `
+                <tr class="${read.hotlist_match ? 'table-warning' : ''}">
+                    <td>${formatDateTime(read.timestamp)}</td>
+                    <td>
+                        <strong>${read.license_plate}</strong>
+                        ${read.hotlist_match ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Hotlist Match"></i>' : ''}
+                    </td>
+                    <td>${read.camera_id}</td>
+                    <td>${read.location}</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            ${read.plate_image_path ? `
+                                <img src="/uploads/${read.plate_image_path}" 
+                                     alt="Plate Image" 
+                                     class="img-thumbnail image-thumbnail" 
+                                     style="width: 60px; height: 40px; object-fit: cover; cursor: pointer;" 
+                                     onclick="expandImage('/uploads/${read.plate_image_path}', 'Plate Image - ${read.license_plate}')"
+                                     title="Click to expand plate image">
+                            ` : ''}
+                            ${read.context_image_path ? `
+                                <img src="/uploads/${read.context_image_path}" 
+                                     alt="Context Image" 
+                                     class="img-thumbnail image-thumbnail" 
+                                     style="width: 60px; height: 40px; object-fit: cover; cursor: pointer;" 
+                                     onclick="expandImage('/uploads/${read.context_image_path}', 'Context Image - ${read.license_plate}')"
+                                     title="Click to expand context image">
+                            ` : ''}
+                            ${!read.plate_image_path && !read.context_image_path ? '<span class="text-muted">No images</span>' : ''}
                         </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="badge bg-${read.hotlist_match ? 'warning' : 'success'}">
-                        ${read.hotlist_match ? 'Match' : 'Clear'}
-                    </span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="showReadDetails(${read.id})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-        
-        if (append) {
-            tableBody.innerHTML += rowsHtml;
-            currentOffset += reads.length;
+                    </td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar ${getConfidenceColor(read.confidence)}" 
+                                 role="progressbar" 
+                                 style="width: ${read.confidence}%">
+                                ${read.confidence}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-${read.hotlist_match ? 'warning' : 'success'}">
+                            ${read.hotlist_match ? 'Match' : 'Clear'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showReadDetails(${read.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            if (append) {
+                tableBody.innerHTML += rowsHtml;
+                currentOffset += reads.length;
+            } else {
+                tableBody.innerHTML = rowsHtml;
+                currentOffset = reads.length;
+            }
         } else {
-            tableBody.innerHTML = rowsHtml;
+            // Tile view - don't support append mode for now
+            renderTileView(reads);
             currentOffset = reads.length;
         }
         
-        document.getElementById('recordCount').textContent = append ? 
+        document.getElementById('recordCount').textContent = append && currentView === 'list' ? 
             (parseInt(document.getElementById('recordCount').textContent) + reads.length) : 
             reads.length;
         
@@ -512,6 +545,98 @@ function formatDateTime(dateString) {
 function showAlert(message, type) {
     // Simple alert for now - could be enhanced with toast notifications
     alert(message);
+}
+
+// View switching functions
+let currentView = 'list';
+
+function setView(viewType) {
+    currentView = viewType;
+    
+    // Update button states
+    document.getElementById('listViewBtn').classList.toggle('active', viewType === 'list');
+    document.getElementById('tileViewBtn').classList.toggle('active', viewType === 'tile');
+    
+    // Show/hide views
+    document.getElementById('listView').style.display = viewType === 'list' ? 'block' : 'none';
+    document.getElementById('tileView').style.display = viewType === 'tile' ? 'block' : 'none';
+    
+    // Reload data for the new view
+    currentOffset = 0;
+    loadReads();
+}
+
+function renderTileView(reads) {
+    const tileContainer = document.getElementById('tileContainer');
+    
+    if (reads.length === 0) {
+        tileContainer.innerHTML = '<div class="col-12 text-center text-muted">No reads found</div>';
+        return;
+    }
+    
+    const tilesHtml = reads.map(read => `
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+            <div class="card ${read.hotlist_match ? 'border-warning' : ''}" style="height: 400px;">
+                <div class="card-body d-flex flex-column">
+                    <!-- Images Section -->
+                    <div class="mb-3" style="flex-grow: 1;">
+                        <div class="row">
+                            ${read.plate_image_path ? `
+                                <div class="col-6">
+                                    <img src="/uploads/${read.plate_image_path}" 
+                                         class="img-fluid rounded" 
+                                         alt="Plate Image" 
+                                         style="max-height: 120px; width: 100%; object-fit: cover; cursor: pointer;"
+                                         onclick="expandImage('/uploads/${read.plate_image_path}', 'Plate Image')">
+                                    <small class="text-muted d-block text-center mt-1">Plate</small>
+                                </div>
+                            ` : ''}
+                            ${read.context_image_path ? `
+                                <div class="col-6">
+                                    <img src="/uploads/${read.context_image_path}" 
+                                         class="img-fluid rounded" 
+                                         alt="Context Image" 
+                                         style="max-height: 120px; width: 100%; object-fit: cover; cursor: pointer;"
+                                         onclick="expandImage('/uploads/${read.context_image_path}', 'Context Image')">
+                                    <small class="text-muted d-block text-center mt-1">Overview</small>
+                                </div>
+                            ` : ''}
+                            ${!read.plate_image_path && !read.context_image_path ? `
+                                <div class="col-12 text-center text-muted">
+                                    <i class="fas fa-image fa-3x mb-2"></i>
+                                    <div>No images available</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- License Plate -->
+                    <div class="text-center mb-2">
+                        <h5 class="mb-0">${read.license_plate}</h5>
+                        ${read.hotlist_match ? '<span class="badge bg-warning text-dark">Hotlist Match</span>' : ''}
+                    </div>
+                    
+                    <!-- Details -->
+                    <div class="small text-muted text-center mb-3">
+                        <div><i class="fas fa-clock me-1"></i>${formatDateTime(read.timestamp)}</div>
+                        <div><i class="fas fa-camera me-1"></i>${read.camera_id}</div>
+                        <div><i class="fas fa-map-marker-alt me-1"></i>${read.location || 'Unknown'}</div>
+                        <div><i class="fas fa-percentage me-1"></i>${read.confidence || 0}% confidence</div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="text-center mt-auto">
+                        <button class="btn btn-sm btn-outline-primary" onclick="showReadDetails(${read.id})">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    tileContainer.innerHTML = tilesHtml;
 }
 </script>
 
