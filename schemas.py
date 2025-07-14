@@ -2,7 +2,59 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Optional, List
 
-# Hotlist Schemas
+# Hotlist Group Schemas
+class HotlistGroupBase(BaseModel):
+    name: str = Field(..., max_length=100, description="Name of the hotlist")
+    description: str = Field(..., description="Description of the hotlist purpose")
+    category: str = Field(..., max_length=50, description="Category (stolen, wanted, bolo, etc.)")
+    priority: str = Field("medium", description="Priority level (low, medium, high, critical)")
+    created_by: str = Field(..., max_length=100, description="User who created this hotlist")
+    is_active: bool = Field(True, description="Whether this hotlist is active")
+    expiry_date: Optional[datetime] = Field(None, description="When this hotlist expires")
+
+class VehicleBase(BaseModel):
+    license_plate: str = Field(..., max_length=20, description="Vehicle license plate number")
+    vehicle_make: Optional[str] = Field(None, max_length=50)
+    vehicle_model: Optional[str] = Field(None, max_length=50)
+    vehicle_color: Optional[str] = Field(None, max_length=30)
+    vehicle_year: Optional[int] = Field(None, ge=1900, le=2030)
+    owner_name: Optional[str] = Field(None, max_length=200)
+    notes: Optional[str] = None
+
+class VehicleCreate(VehicleBase):
+    pass
+
+class VehicleResponse(VehicleBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    is_active: bool
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class HotlistGroupCreate(HotlistGroupBase):
+    vehicles: List[VehicleCreate] = Field(..., description="List of vehicles in this hotlist")
+
+class HotlistGroupUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = None
+    category: Optional[str] = Field(None, max_length=50)
+    priority: Optional[str] = None
+    created_by: Optional[str] = Field(None, max_length=100)
+    is_active: Optional[bool] = None
+    expiry_date: Optional[datetime] = None
+    vehicles: Optional[List[VehicleCreate]] = None
+
+class HotlistGroupResponse(HotlistGroupBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    revision: int
+    vehicles: List[VehicleResponse] = Field(default_factory=list)
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# Legacy Hotlist Schemas (for backward compatibility)
 class HotlistBase(BaseModel):
     license_plate: str = Field(..., max_length=20, description="Vehicle license plate number")
     description: str = Field(..., description="Description of why this vehicle is on the hotlist")

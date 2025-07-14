@@ -18,16 +18,18 @@ from pathlib import Path
 
 from database import SessionLocal, engine, Base
 from models import (
-    Hotlist, ANPRRead, DeviceSource, HotlistRevision, HotlistRepository
+    Hotlist, HotlistGroup, ANPRRead, DeviceSource, HotlistRevision, HotlistRepository
 )
 from schemas import (
-    HotlistCreate, HotlistUpdate, HotlistResponse, ANPRReadCreate, ANPRReadResponse,
+    HotlistCreate, HotlistUpdate, HotlistResponse, 
+    HotlistGroupCreate, HotlistGroupUpdate, HotlistGroupResponse, VehicleCreate, VehicleResponse,
+    ANPRReadCreate, ANPRReadResponse,
     BofHotlistRevisions, BofHotlistData, ExternalHotlistRevisions, DeviceSourceCreate,
     DeviceSourceResponse, GetHotlistRepoStatusRequest, GetHotlistStatusRequest,
     SetHotlistStatusRequest, GetHotlistUpdatesRequest, GetHotlistUpdatesRestrictSizeRequest,
     GetMultipleHotlistUpdatesRequest, GetMultipleHotlistUpdatesRestrictSizeRequest,
     BofSendCaptureRequest, BofSendCompactCaptureRequest, BofSendCompoundCaptureRequest,
-    BofAddBinaryCaptureDataRequest, BofCaptureResponse
+    BofAddBinaryCaptureDataRequest, BofCaptureResponse, StatsResponse
 )
 
 # Setup logging
@@ -251,6 +253,127 @@ async def delete_hotlist(hotlist_id: int, db: Session = Depends(get_db)):
     increment_hotlist_repository_revision(db)
     
     return {"message": "Hotlist entry deleted successfully"}
+
+# API Routes - Hotlist Groups (New structured hotlists)
+@app.post("/api/hotlist-groups", response_model=HotlistGroupResponse)
+async def create_hotlist_group(hotlist_group: HotlistGroupCreate, db: Session = Depends(get_db)):
+    """Create a new hotlist group with multiple vehicles"""
+    # Create the hotlist group
+    db_hotlist_group = HotlistGroup(
+        name=hotlist_group.name,
+        description=hotlist_group.description,
+        category=hotlist_group.category,
+        priority=hotlist_group.priority,
+        created_by=hotlist_group.created_by,
+        is_active=hotlist_group.is_active,
+        expiry_date=hotlist_group.expiry_date
+    )
+    db.add(db_hotlist_group)
+    db.commit()
+    db.refresh(db_hotlist_group)
+    
+    # Add vehicles to the group
+    for vehicle_data in hotlist_group.vehicles:
+        db_vehicle = Hotlist(
+            hotlist_group_id=db_hotlist_group.id,
+            **vehicle_data.model_dump()
+        )
+        db.add(db_vehicle)
+    
+    db.commit()
+    db.refresh(db_hotlist_group)
+    
+    # Increment global repository revision
+    increment_hotlist_repository_revision(db)
+    
+    return db_hotlist_group
+
+@app.get("/api/hotlist-groups", response_model=List[HotlistGroupResponse])
+async def get_hotlist_groups(
+    skip: int = 0, 
+    limit: int = 100, 
+    search: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Get all hotlist groups with optional search"""
+    query = db.query(HotlistGroup)
+    
+    if search:
+        query = query.filter(
+            HotlistGroup.name.ilike(f"%{search}%") |
+            HotlistGroup.description.ilike(f"%{search}%") |
+            HotlistGroup.category.ilike(f"%{search}%")
+        )
+    
+    hotlist_groups = query.offset(skip).limit(limit).all()
+    return hotlist_groups
+
+@app.get("/api/hotlist-groups/{group_id}", response_model=HotlistGroupResponse)
+async def get_hotlist_group(group_id: int, db: Session = Depends(get_db)):
+    """Get a specific hotlist group by ID"""
+    hotlist_group = db.query(HotlistGroup).filter(HotlistGroup.id == group_id).first()
+    if not hotlist_group:
+        raise HTTPException(status_code=404, detail="Hotlist group not found")
+    return hotlist_group
+
+@app.put("/api/hotlist-groups/{group_id}", response_model=HotlistGroupResponse)
+async def update_hotlist_group(group_id: int, hotlist_group_update: HotlistGroupUpdate, db: Session = Depends(get_db)):
+    """Update a hotlist group"""
+    hotlist_group = db.query(HotlistGroup).filter(HotlistGroup.id == group_id).first()
+    if not hotlist_group:
+        raise HTTPException(status_code=404, detail="Hotlist group not found")
+    
+    update_data = hotlist_group_update.model_dump(exclude_unset=True)
+    
+    # Handle vehicles update separately
+    if 'vehicles' in update_data:
+        vehicles_data = update_data.pop('vehicles')
+        
+        # Delete existing vehicles
+        db.query(Hotlist).filter(Hotlist.hotlist_group_id == group_id).delete()
+        
+        # Add new vehicles
+        for vehicle_data in vehicles_data:
+            db_vehicle = Hotlist(
+                hotlist_group_id=group_id,
+                **vehicle_data
+            )
+            db.add(db_vehicle)
+    
+    # Update group fields
+    for field, value in update_data.items():
+        setattr(hotlist_group, field, value)
+    
+    # Increment the hotlist group revision
+    hotlist_group.revision += 1
+    hotlist_group.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(hotlist_group)
+    
+    # Increment global repository revision
+    increment_hotlist_repository_revision(db)
+    
+    return hotlist_group
+
+@app.delete("/api/hotlist-groups/{group_id}")
+async def delete_hotlist_group(group_id: int, db: Session = Depends(get_db)):
+    """Delete a hotlist group and all its vehicles"""
+    hotlist_group = db.query(HotlistGroup).filter(HotlistGroup.id == group_id).first()
+    if not hotlist_group:
+        raise HTTPException(status_code=404, detail="Hotlist group not found")
+    
+    # Delete all vehicles in the group
+    db.query(Hotlist).filter(Hotlist.hotlist_group_id == group_id).delete()
+    
+    # Delete the group
+    db.delete(hotlist_group)
+    db.commit()
+    
+    # Increment global repository revision
+    increment_hotlist_repository_revision(db)
+    
+    return {"message": "Hotlist group deleted successfully"}
 
 # API Routes - ANPR Reads
 @app.post("/anpr/reads", response_model=ANPRReadResponse)

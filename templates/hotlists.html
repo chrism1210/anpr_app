@@ -10,9 +10,9 @@
                 <i class="fas fa-list me-2"></i>
                 Vehicle Hotlists
             </h1>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hotlistModal">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hotlistGroupModal">
                 <i class="fas fa-plus me-2"></i>
-                Add Hotlist
+                Add Hotlist Group
             </button>
         </div>
     </div>
@@ -51,10 +51,11 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>License Plate</th>
+                        <th>Hotlist Name</th>
                         <th>Category</th>
                         <th>Priority</th>
                         <th>Description</th>
+                        <th>Vehicles</th>
                         <th>Created</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -62,7 +63,7 @@
                 </thead>
                 <tbody id="hotlistsTable">
                     <tr>
-                        <td colspan="7" class="text-center">
+                        <td colspan="8" class="text-center">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -74,21 +75,22 @@
     </div>
 </div>
 
-<!-- Add/Edit Hotlist Modal -->
-<div class="modal fade" id="hotlistModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<!-- Add/Edit Hotlist Group Modal -->
+<div class="modal fade" id="hotlistGroupModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Add Hotlist Entry</h5>
+                <h5 class="modal-title" id="modalTitle">Add Hotlist Group</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="hotlistForm">
+                <form id="hotlistGroupForm">
+                    <!-- Hotlist Group Information -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="licensePlate" class="form-label">License Plate *</label>
-                                <input type="text" class="form-control" id="licensePlate" required>
+                                <label for="hotlistName" class="form-label">Hotlist Name *</label>
+                                <input type="text" class="form-control" id="hotlistName" required>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -130,45 +132,26 @@
                         <textarea class="form-control" id="description" rows="3" required></textarea>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="vehicleMake" class="form-label">Vehicle Make</label>
-                                <input type="text" class="form-control" id="vehicleMake">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="vehicleModel" class="form-label">Vehicle Model</label>
-                                <input type="text" class="form-control" id="vehicleModel">
-                            </div>
-                        </div>
+
+                    
+                    <hr>
+                    
+                    <!-- Vehicles Section -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Vehicles in this Hotlist</h6>
+                        <button type="button" class="btn btn-sm btn-success" id="addVehicleBtn">
+                            <i class="fas fa-plus me-1"></i>
+                            Add Vehicle
+                        </button>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="vehicleColor" class="form-label">Vehicle Color</label>
-                                <input type="text" class="form-control" id="vehicleColor">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="vehicleYear" class="form-label">Vehicle Year</label>
-                                <input type="number" class="form-control" id="vehicleYear" min="1900" max="2030">
-                            </div>
-                        </div>
+                    <div id="vehiclesContainer">
+                        <!-- Vehicle entries will be added here -->
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="ownerName" class="form-label">Owner Name</label>
-                        <input type="text" class="form-control" id="ownerName">
-                    </div>
+
                     
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">Notes</label>
-                        <textarea class="form-control" id="notes" rows="2"></textarea>
-                    </div>
+
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -190,7 +173,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveBtn">Save</button>
+                <button type="button" class="btn btn-primary" id="saveBtn">Save Hotlist Group</button>
             </div>
         </div>
     </div>
@@ -199,83 +182,99 @@
 
 {% block scripts %}
 <script>
-let currentHotlistId = null;
+let currentHotlistGroupId = null;
+let vehicleCounter = 0;
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadHotlists();
+    loadHotlistGroups();
     
     // Search functionality
-    document.getElementById('searchBtn').addEventListener('click', loadHotlists);
+    document.getElementById('searchBtn').addEventListener('click', loadHotlistGroups);
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            loadHotlists();
+            loadHotlistGroups();
         }
     });
     
     // Filter functionality
-    document.getElementById('categoryFilter').addEventListener('change', loadHotlists);
-    document.getElementById('statusFilter').addEventListener('change', loadHotlists);
+    document.getElementById('categoryFilter').addEventListener('change', loadHotlistGroups);
+    document.getElementById('statusFilter').addEventListener('change', loadHotlistGroups);
     
     // Form submission
-    document.getElementById('saveBtn').addEventListener('click', saveHotlist);
+    document.getElementById('saveBtn').addEventListener('click', saveHotlistGroup);
+    
+    // Add vehicle button
+    document.getElementById('addVehicleBtn').addEventListener('click', addVehicleRow);
     
     // Reset form when modal closes
-    document.getElementById('hotlistModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('hotlistGroupModal').addEventListener('hidden.bs.modal', function () {
         resetForm();
     });
+    
+    // Add initial vehicle row
+    addVehicleRow();
 });
 
-async function loadHotlists() {
+async function loadHotlistGroups() {
     try {
         const search = document.getElementById('searchInput').value;
         const category = document.getElementById('categoryFilter').value;
         const status = document.getElementById('statusFilter').value;
         
-        let url = '/api/hotlists';
+        let url = '/api/hotlist-groups';
         const params = new URLSearchParams();
         
         if (search) params.append('search', search);
         if (params.toString()) url += '?' + params.toString();
         
         const response = await axios.get(url);
-        let hotlists = response.data;
+        let hotlistGroups = response.data;
         
         // Filter by category and status on frontend
         if (category) {
-            hotlists = hotlists.filter(h => h.category === category);
+            hotlistGroups = hotlistGroups.filter(h => h.category === category);
         }
         if (status) {
-            hotlists = hotlists.filter(h => status === 'active' ? h.is_active : !h.is_active);
+            hotlistGroups = hotlistGroups.filter(h => status === 'active' ? h.is_active : !h.is_active);
         }
         
         const tableBody = document.getElementById('hotlistsTable');
         
-        if (hotlists.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hotlists found</td></tr>';
+        if (hotlistGroups.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hotlist groups found</td></tr>';
             return;
         }
         
-        tableBody.innerHTML = hotlists.map(hotlist => `
+        tableBody.innerHTML = hotlistGroups.map(group => `
             <tr>
-                <td><strong>${hotlist.license_plate}</strong></td>
+                <td><strong>${group.name}</strong></td>
                 <td>
-                    <span class="badge bg-${getCategoryColor(hotlist.category)}">${hotlist.category}</span>
+                    <span class="badge bg-${getCategoryColor(group.category)}">${group.category}</span>
                 </td>
                 <td>
-                    <span class="badge bg-${getPriorityColor(hotlist.priority)}">${hotlist.priority}</span>
+                    <span class="badge bg-${getPriorityColor(group.priority)}">${group.priority}</span>
                 </td>
-                <td>${hotlist.description}</td>
-                <td>${formatDate(hotlist.created_at)}</td>
+                <td>${group.description}</td>
                 <td>
-                    <span class="badge bg-${hotlist.is_active ? 'success' : 'secondary'}">
-                        ${hotlist.is_active ? 'Active' : 'Inactive'}
+                    <div class="d-flex flex-wrap gap-1">
+                        ${group.vehicles.map(vehicle => `
+                            <span class="badge bg-primary" title="${vehicle.vehicle_make || ''} ${vehicle.vehicle_model || ''} ${vehicle.vehicle_color || ''}">
+                                ${vehicle.license_plate}
+                            </span>
+                        `).join('')}
+                    </div>
+                </td>
+                <td>${formatDate(group.created_at)}</td>
+                <td>
+                    <span class="badge bg-${group.is_active ? 'success' : 'secondary'}">
+                        ${group.is_active ? 'Active' : 'Inactive'}
                     </span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editHotlist(${hotlist.id})">
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editHotlistGroup(${group.id})">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHotlist(${hotlist.id})">
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHotlistGroup(${group.id})">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -288,17 +287,94 @@ async function loadHotlists() {
     }
 }
 
-async function editHotlist(id) {
+// Add vehicle row to the form
+function addVehicleRow() {
+    const container = document.getElementById('vehiclesContainer');
+    const vehicleId = vehicleCounter++;
+    
+    const vehicleRow = document.createElement('div');
+    vehicleRow.className = 'card mb-3';
+    vehicleRow.id = `vehicle-${vehicleId}`;
+    vehicleRow.innerHTML = `
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="card-title mb-0">Vehicle ${vehicleId + 1}</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVehicleRow(${vehicleId})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="licensePlate-${vehicleId}" class="form-label">License Plate *</label>
+                        <input type="text" class="form-control" id="licensePlate-${vehicleId}" name="licensePlate" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="vehicleMake-${vehicleId}" class="form-label">Make</label>
+                        <input type="text" class="form-control" id="vehicleMake-${vehicleId}" name="vehicleMake">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="vehicleModel-${vehicleId}" class="form-label">Model</label>
+                        <input type="text" class="form-control" id="vehicleModel-${vehicleId}" name="vehicleModel">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="vehicleColor-${vehicleId}" class="form-label">Color</label>
+                        <input type="text" class="form-control" id="vehicleColor-${vehicleId}" name="vehicleColor">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="vehicleYear-${vehicleId}" class="form-label">Year</label>
+                        <input type="number" class="form-control" id="vehicleYear-${vehicleId}" name="vehicleYear" min="1900" max="2030">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="ownerName-${vehicleId}" class="form-label">Owner Name</label>
+                        <input type="text" class="form-control" id="ownerName-${vehicleId}" name="ownerName">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="notes-${vehicleId}" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes-${vehicleId}" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(vehicleRow);
+}
+
+function removeVehicleRow(vehicleId) {
+    const vehicleRow = document.getElementById(`vehicle-${vehicleId}`);
+    if (vehicleRow) {
+        vehicleRow.remove();
+    }
+}
+
+async function editHotlistGroup(id) {
     try {
-        const response = await axios.get(`/api/hotlists/${id}`);
-        const hotlist = response.data;
+        const response = await axios.get(`/api/hotlist-groups/${id}`);
+        const group = response.data;
         
-        currentHotlistId = id;
-        document.getElementById('modalTitle').textContent = 'Edit Hotlist Entry';
+        currentHotlistGroupId = id;
+        document.getElementById('modalTitle').textContent = 'Edit Hotlist Group';
         
         // Populate form
-        document.getElementById('licensePlate').value = hotlist.license_plate;
-        document.getElementById('category').value = hotlist.category;
+        document.getElementById('hotlistName').value = group.name;
+        document.getElementById('category').value = group.category;
         document.getElementById('priority').value = hotlist.priority;
         document.getElementById('createdBy').value = hotlist.created_by;
         document.getElementById('description').value = hotlist.description;
@@ -407,4 +483,5 @@ function showAlert(message, type) {
     alert(message);
 }
 </script>
+{% endblock %} 
 {% endblock %} 
