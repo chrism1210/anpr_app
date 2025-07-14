@@ -1,0 +1,654 @@
+{
+	"info": {
+		"_postman_id": "12345678-1234-1234-1234-123456789abc",
+		"name": "ANPR BOF Services",
+		"description": "Complete collection for testing ANPR BOF (Back Office Facility) hotlist synchronization services according to SDR-143 specification",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "BOF Hotlist Services",
+			"item": [
+				{
+					"name": "Get Hotlist Repository Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistRepoStatus?sourceID={{source_id}}&revisionnumber={{revision_number}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"UpdateHotlistsService",
+								"getHotlistRepoStatus"
+							],
+							"query": [
+								{
+									"key": "sourceID",
+									"value": "{{source_id}}",
+									"description": "Source identifier for the device"
+								},
+								{
+									"key": "revisionnumber",
+									"value": "{{revision_number}}",
+									"description": "Current revision number the device has"
+								}
+							]
+						},
+						"description": "Gets the current repository revision status. Returns revision number and update availability."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Hotlist Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistStatus?sourceID={{source_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"UpdateHotlistsService",
+								"getHotlistStatus"
+							],
+							"query": [
+								{
+									"key": "sourceID",
+									"value": "{{source_id}}",
+									"description": "Source identifier for the device"
+								}
+							]
+						},
+						"description": "Gets the hotlist status array for a source, showing revision information for each hotlist."
+					},
+					"response": []
+				},
+				{
+					"name": "Set Hotlist Status",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"sourceID\": \"{{source_id}}\",\n    \"hotlistname\": \"hotlist_TEST123\",\n    \"externalSystemRevision\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/setHotlistStatus",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"UpdateHotlistsService",
+								"setHotlistStatus"
+							]
+						},
+						"description": "Updates the device's hotlist status with the current revision number it has."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Hotlist Updates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistUpdates?sourceID={{source_id}}&hotlistname={{hotlist_name}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"UpdateHotlistsService",
+								"getHotlistUpdates"
+							],
+							"query": [
+								{
+									"key": "sourceID",
+									"value": "{{source_id}}",
+									"description": "Source identifier for the device"
+								},
+								{
+									"key": "hotlistname",
+									"value": "{{hotlist_name}}",
+									"description": "Name of the hotlist to get updates for"
+								}
+							]
+						},
+						"description": "Gets hotlist updates as a ZIP file containing CSV data with changes since the device's last known revision."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Hotlist Updates (Size Restricted)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistUpdatesRestrictSize?sourceID={{source_id}}&hotlistname={{hotlist_name}}&maxsize={{max_size}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"UpdateHotlistsService",
+								"getHotlistUpdatesRestrictSize"
+							],
+							"query": [
+								{
+									"key": "sourceID",
+									"value": "{{source_id}}",
+									"description": "Source identifier for the device"
+								},
+								{
+									"key": "hotlistname",
+									"value": "{{hotlist_name}}",
+									"description": "Name of the hotlist to get updates for"
+								},
+								{
+									"key": "maxsize",
+									"value": "{{max_size}}",
+									"description": "Maximum size in bytes for the response"
+								}
+							]
+						},
+						"description": "Gets hotlist updates with size restrictions to prevent large downloads."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Multiple Hotlist Updates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getMultipleHotlistUpdates?sourceid={{source_id}}&hotlistnames={{hotlist_names}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"UpdateHotlistsService",
+								"getMultipleHotlistUpdates"
+							],
+							"query": [
+								{
+									"key": "sourceid",
+									"value": "{{source_id}}",
+									"description": "Source identifier for the device"
+								},
+								{
+									"key": "hotlistnames",
+									"value": "{{hotlist_names}}",
+									"description": "Comma-separated list of hotlist names"
+								}
+							]
+						},
+						"description": "Gets updates for multiple hotlists in a single request."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Multiple Hotlist Updates (Size Restricted)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getMultipleHotlistUpdatesRestrictSize?sourceid={{source_id}}&hotlistnames={{hotlist_names}}&maxsize={{max_size}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"UpdateHotlistsService",
+								"getMultipleHotlistUpdatesRestrictSize"
+							],
+							"query": [
+								{
+									"key": "sourceid",
+									"value": "{{source_id}}",
+									"description": "Source identifier for the device"
+								},
+								{
+									"key": "hotlistnames",
+									"value": "{{hotlist_names}}",
+									"description": "Comma-separated list of hotlist names"
+								},
+								{
+									"key": "maxsize",
+									"value": "{{max_size}}",
+									"description": "Maximum size in bytes for the response"
+								}
+							]
+						},
+						"description": "Gets updates for multiple hotlists with size restrictions."
+					},
+					"response": []
+				}
+			],
+			"description": "BOF (Back Office Facility) hotlist synchronization endpoints according to SDR-143 specification"
+		},
+		{
+			"name": "Hotlist Management API",
+			"item": [
+				{
+					"name": "Create Hotlist Entry",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"license_plate\": \"TEST123\",\n    \"description\": \"Test hotlist entry for stolen vehicle\",\n    \"category\": \"stolen\",\n    \"priority\": \"high\",\n    \"created_by\": \"admin\",\n    \"vehicle_make\": \"Toyota\",\n    \"vehicle_model\": \"Camry\",\n    \"vehicle_color\": \"Blue\",\n    \"vehicle_year\": 2020,\n    \"owner_name\": \"John Doe\",\n    \"notes\": \"Stolen from parking lot\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/hotlists",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"hotlists"
+							]
+						},
+						"description": "Creates a new hotlist entry with vehicle information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Hotlists",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/hotlists?skip=0&limit=50",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"hotlists"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0",
+									"description": "Number of records to skip"
+								},
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Maximum number of records to return"
+								}
+							]
+						},
+						"description": "Retrieves all hotlist entries with pagination support."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Hotlist by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/hotlists/{{hotlist_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"hotlists",
+								"{{hotlist_id}}"
+							]
+						},
+						"description": "Retrieves a specific hotlist entry by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Hotlist Entry",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Updated description for stolen vehicle\",\n    \"priority\": \"critical\",\n    \"notes\": \"Updated notes - vehicle spotted in downtown area\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/hotlists/{{hotlist_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"hotlists",
+								"{{hotlist_id}}"
+							]
+						},
+						"description": "Updates an existing hotlist entry."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Hotlist Entry",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/hotlists/{{hotlist_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"hotlists",
+								"{{hotlist_id}}"
+							]
+						},
+						"description": "Deletes a hotlist entry by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Search Hotlists",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/hotlists/search?license_plate={{license_plate}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"hotlists",
+								"search"
+							],
+							"query": [
+								{
+									"key": "license_plate",
+									"value": "{{license_plate}}",
+									"description": "License plate to search for"
+								}
+							]
+						},
+						"description": "Searches for hotlist entries by license plate."
+					},
+					"response": []
+				}
+			],
+			"description": "Standard REST API endpoints for hotlist management"
+		},
+		{
+			"name": "ANPR Reads API",
+			"item": [
+				{
+					"name": "Submit ANPR Read",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"license_plate\": \"ABC123\",\n    \"confidence\": 0.95,\n    \"camera_id\": \"CAM001\",\n    \"location\": \"Main Street & 1st Ave\",\n    \"direction\": \"northbound\",\n    \"vehicle_make\": \"Toyota\",\n    \"vehicle_model\": \"Camry\",\n    \"vehicle_color\": \"Blue\",\n    \"vehicle_year\": 2020\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/anpr/reads",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"anpr",
+								"reads"
+							]
+						},
+						"description": "Submits a new ANPR read from a camera system."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All ANPR Reads",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/anpr/reads?skip=0&limit=50",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"anpr",
+								"reads"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0",
+									"description": "Number of records to skip"
+								},
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Maximum number of records to return"
+								}
+							]
+						},
+						"description": "Retrieves all ANPR reads with pagination support."
+					},
+					"response": []
+				},
+				{
+					"name": "Get ANPR Read by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/anpr/reads/{{read_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"anpr",
+								"reads",
+								"{{read_id}}"
+							]
+						},
+						"description": "Retrieves a specific ANPR read by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Search ANPR Reads",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/anpr/reads/search?license_plate={{license_plate}}&camera_id={{camera_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"anpr",
+								"reads",
+								"search"
+							],
+							"query": [
+								{
+									"key": "license_plate",
+									"value": "{{license_plate}}",
+									"description": "License plate to search for"
+								},
+								{
+									"key": "camera_id",
+									"value": "{{camera_id}}",
+									"description": "Camera ID to filter by"
+								}
+							]
+						},
+						"description": "Searches ANPR reads by license plate and/or camera ID."
+					},
+					"response": []
+				}
+			],
+			"description": "ANPR read submission and retrieval endpoints"
+		},
+		{
+			"name": "Web Interface",
+			"item": [
+				{
+					"name": "Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Main dashboard web interface."
+					},
+					"response": []
+				},
+				{
+					"name": "Hotlists Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/hotlists",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hotlists"
+							]
+						},
+						"description": "Hotlist management web interface."
+					},
+					"response": []
+				},
+				{
+					"name": "ANPR Reads Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/anpr/reads",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"anpr",
+								"reads"
+							]
+						},
+						"description": "ANPR reads viewing web interface."
+					},
+					"response": []
+				}
+			],
+			"description": "Web interface endpoints for browser access"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string",
+			"description": "Base URL for the ANPR application"
+		},
+		{
+			"key": "source_id",
+			"value": "TEST001",
+			"type": "string",
+			"description": "Test source identifier for BOF services"
+		},
+		{
+			"key": "revision_number",
+			"value": "1",
+			"type": "string",
+			"description": "Current revision number"
+		},
+		{
+			"key": "hotlist_name",
+			"value": "hotlist_TEST123",
+			"type": "string",
+			"description": "Example hotlist name"
+		},
+		{
+			"key": "hotlist_names",
+			"value": "hotlist_TEST123,hotlist_ABC456",
+			"type": "string",
+			"description": "Comma-separated list of hotlist names"
+		},
+		{
+			"key": "max_size",
+			"value": "1048576",
+			"type": "string",
+			"description": "Maximum size in bytes (1MB)"
+		},
+		{
+			"key": "hotlist_id",
+			"value": "1",
+			"type": "string",
+			"description": "Hotlist entry ID"
+		},
+		{
+			"key": "read_id",
+			"value": "1",
+			"type": "string",
+			"description": "ANPR read ID"
+		},
+		{
+			"key": "license_plate",
+			"value": "TEST123",
+			"type": "string",
+			"description": "License plate number for testing"
+		},
+		{
+			"key": "camera_id",
+			"value": "CAM001",
+			"type": "string",
+			"description": "Camera identifier"
+		}
+	]
+} 
