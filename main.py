@@ -93,21 +93,25 @@ def increment_hotlist_repository_revision(db: Session):
     repo.updated_at = datetime.utcnow()
     db.commit()
 
-def get_or_create_hotlist_revision(db: Session, hotlist_id: int, device_source_id: int, hotlist_name: str) -> HotlistRevision:
+def get_or_create_hotlist_revision(db: Session, hotlist_group_id: int, device_source_id: int, hotlist_name: str) -> HotlistRevision:
     """Get or create a hotlist revision tracking entry"""
     revision = db.query(HotlistRevision).filter(
-        HotlistRevision.hotlist_id == hotlist_id,
+        HotlistRevision.hotlist_group_id == hotlist_group_id,
         HotlistRevision.device_source_id == device_source_id
     ).first()
     
     if not revision:
-        # Get the current hotlist revision
-        hotlist = db.query(Hotlist).filter(Hotlist.id == hotlist_id).first()
+        # Get the current hotlist group revision (use the highest revision from its hotlists)
+        latest_hotlist_revision = db.query(Hotlist).filter(
+            Hotlist.hotlist_group_id == hotlist_group_id,
+            Hotlist.is_active == True
+        ).order_by(Hotlist.revision.desc()).first()
+        
         revision = HotlistRevision(
-            hotlist_id=hotlist_id,
+            hotlist_group_id=hotlist_group_id,
             device_source_id=device_source_id,
             hotlist_name=hotlist_name,
-            latest_revision=hotlist.revision if hotlist else 1,
+            latest_revision=latest_hotlist_revision.revision if latest_hotlist_revision else 1,
             external_system_revision=-1
         )
         db.add(revision)
@@ -577,7 +581,7 @@ async def get_hotlist_status(
         hotlist_name = f"hotlist_{hotlist.license_plate}"
         
         # Get or create revision tracking
-        revision = get_or_create_hotlist_revision(db, hotlist.id, device_source.id, hotlist_name)
+        revision = get_or_create_hotlist_revision(db, hotlist.hotlist_group_id, device_source.id, hotlist_name)
         
         # Update latest revision from hotlist
         revision.latest_revision = hotlist.revision
