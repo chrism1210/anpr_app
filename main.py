@@ -639,7 +639,7 @@ async def bof_send_capture(
 ):
     """
     BOF: Send complete capture record to BOF system
-    Creates an ANPR read from the full capture data
+    Creates an ANPR read from the full capture data with image support
     """
     try:
         # Parse capture date
@@ -663,10 +663,57 @@ async def bof_send_capture(
             anpr_read.hotlist_match = True
             anpr_read.hotlist_id = hotlist_match.id
         
-        # Save to database
+        # Save to database first to get the ID
         db.add(anpr_read)
         db.commit()
         db.refresh(anpr_read)
+        
+        # Process plate image if provided
+        if request.plateImage:
+            try:
+                # Decode base64 image
+                image_data = base64.b64decode(request.plateImage)
+                
+                # Generate filename
+                filename = f"plate_{uuid.uuid4()}.jpg"
+                filepath = UPLOAD_DIR / filename
+                
+                # Save image
+                with open(filepath, "wb") as f:
+                    f.write(image_data)
+                
+                # Update ANPR read with image path
+                anpr_read.plate_image_path = str(filepath)
+                
+                logger.info(f"BOF sendCapture: Saved plate image for plate {request.vrm}")
+                
+            except Exception as e:
+                logger.error(f"Error processing plate image: {str(e)}")
+        
+        # Process overview image if provided
+        if request.overviewImage:
+            try:
+                # Decode base64 image
+                image_data = base64.b64decode(request.overviewImage)
+                
+                # Generate filename
+                filename = f"context_{uuid.uuid4()}.jpg"
+                filepath = UPLOAD_DIR / filename
+                
+                # Save image
+                with open(filepath, "wb") as f:
+                    f.write(image_data)
+                
+                # Update ANPR read with context image path
+                anpr_read.context_image_path = str(filepath)
+                
+                logger.info(f"BOF sendCapture: Saved overview image for plate {request.vrm}")
+                
+            except Exception as e:
+                logger.error(f"Error processing overview image: {str(e)}")
+        
+        # Update database with image paths
+        db.commit()
         
         logger.info(f"BOF sendCapture: Created ANPR read for plate {request.vrm}")
         
