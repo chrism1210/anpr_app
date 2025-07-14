@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ANPR System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Dashboard
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-list fa-2x"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0" id="total-hotlists">-</h4>
+                        <small>Total Hotlists</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-camera fa-2x"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0" id="total-reads">-</h4>
+                        <small>Total Reads</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0" id="hotlist-matches">-</h4>
+                        <small>Hotlist Matches</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0"><span id="match-rate">-</span>%</h4>
+                        <small>Match Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-network-wired me-2"></i>
+                    BOF Integration Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="connectivity-status">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Recent Hotlist Matches
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recent-matches">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-camera me-2"></i>
+                    Recent ANPR Reads
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recent-reads">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    
+    // Refresh data every 30 seconds
+    setInterval(loadDashboardData, 30000);
+});
+
+async function loadDashboardData() {
+    try {
+        // Load statistics and connectivity status
+        const [statsResponse, connectivityResponse] = await Promise.all([
+            axios.get('/api/stats'),
+            axios.get('/anpr/connectivity')
+        ]);
+        
+        const stats = statsResponse.data;
+        const connectivity = connectivityResponse.data;
+        
+        document.getElementById('total-hotlists').textContent = stats.total_hotlists;
+        document.getElementById('total-reads').textContent = stats.total_reads;
+        document.getElementById('hotlist-matches').textContent = stats.hotlist_matches;
+        document.getElementById('match-rate').textContent = Math.round(stats.match_rate * 100) / 100;
+        
+        // Update connectivity status
+        const connectivityContainer = document.getElementById('connectivity-status');
+        connectivityContainer.innerHTML = `
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator ${connectivity.bof_enabled ? 'status-active' : 'status-inactive'}"></span>
+                        <div>
+                            <div class="fw-bold">BOF Integration</div>
+                            <small class="text-muted">${connectivity.bof_enabled ? 'Enabled' : 'Disabled'}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator ${connectivity.bof_configured ? 'status-active' : 'status-inactive'}"></span>
+                        <div>
+                            <div class="fw-bold">BOF Server</div>
+                            <small class="text-muted">${connectivity.bof_configured ? 'Configured' : 'Not configured'}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="status-indicator ${connectivity.bof_host ? 'status-active' : 'status-inactive'}"></span>
+                        <div>
+                            <div class="fw-bold">Server Host</div>
+                            <small class="text-muted">${connectivity.bof_host || 'Not set'}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-end">
+                        <a href="/integrations" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-cog me-1"></i>
+                            Configure
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Load recent matches
+                        const matchesResponse = await axios.get('/anpr/reads?hotlist_only=true&limit=5');
+        const matches = matchesResponse.data;
+        
+        const matchesContainer = document.getElementById('recent-matches');
+        if (matches.length === 0) {
+            matchesContainer.innerHTML = '<p class="text-muted">No recent matches</p>';
+        } else {
+            matchesContainer.innerHTML = matches.map(match => `
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <div>
+                        <strong>${match.license_plate}</strong><br>
+                        <small class="text-muted">${match.location}</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="badge bg-warning">${formatDate(match.timestamp)}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Load recent reads
+                        const readsResponse = await axios.get('/anpr/reads?limit=5');
+        const reads = readsResponse.data;
+        
+        const readsContainer = document.getElementById('recent-reads');
+        if (reads.length === 0) {
+            readsContainer.innerHTML = '<p class="text-muted">No recent reads</p>';
+        } else {
+            readsContainer.innerHTML = reads.map(read => `
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <div>
+                        <strong>${read.license_plate}</strong><br>
+                        <small class="text-muted">${read.location}</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="badge ${read.hotlist_match ? 'bg-warning' : 'bg-secondary'}">${formatDate(read.timestamp)}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+}
+</script>
+{% endblock %} 

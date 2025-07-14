@@ -1,0 +1,537 @@
+{% extends "base.html" %}
+
+{% block title %}ANPR Reads - ANPR System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-camera me-2"></i>
+            ANPR Reads
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchInput" placeholder="Search plates, cameras, locations...">
+            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <select class="form-select" id="matchFilter">
+            <option value="">All Reads</option>
+            <option value="true">Hotlist Matches Only</option>
+            <option value="false">Non-Matches Only</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="cameraFilter">
+            <option value="">All Cameras</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <div class="form-check form-switch" style="margin-top: 0.5rem;">
+            <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+            <label class="form-check-label" for="autoRefresh">
+                Auto Refresh (30s)
+            </label>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Recent ANPR Reads</h5>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadReads()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>License Plate</th>
+                        <th>Camera</th>
+                        <th>Location</th>
+                        <th>Images</th>
+                        <th>Confidence</th>
+                        <th>Hotlist Match</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="readsTable">
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <small class="text-muted">Showing <span id="recordCount">0</span> reads</small>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" id="loadMoreBtn" onclick="loadMore()">
+                    Load More
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Read Details Modal -->
+<div class="modal fade" id="readDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ANPR Read Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="readDetailsBody">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test ANPR Read Modal -->
+<div class="modal fade" id="testReadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test ANPR Read</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="testReadForm">
+                    <div class="mb-3">
+                        <label for="testLicensePlate" class="form-label">License Plate *</label>
+                        <input type="text" class="form-control" id="testLicensePlate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="testCameraId" class="form-label">Camera ID *</label>
+                        <input type="text" class="form-control" id="testCameraId" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="testLocation" class="form-label">Location *</label>
+                        <input type="text" class="form-control" id="testLocation" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="testConfidence" class="form-label">Confidence (0-100)</label>
+                        <input type="number" class="form-control" id="testConfidence" min="0" max="100" value="85">
+                    </div>
+                    <div class="mb-3">
+                        <label for="testDirection" class="form-label">Direction</label>
+                        <select class="form-select" id="testDirection">
+                            <option value="">Select Direction</option>
+                            <option value="north">North</option>
+                            <option value="south">South</option>
+                            <option value="east">East</option>
+                            <option value="west">West</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="testSpeed" class="form-label">Speed (mph)</label>
+                                <input type="number" class="form-control" id="testSpeed" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="testLane" class="form-label">Lane</label>
+                                <input type="number" class="form-control" id="testLane" min="1">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitTestRead()">Submit Test Read</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Expansion Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalTitle">Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="expandedImage" class="img-fluid" style="max-width: 100%; max-height: 80vh;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="floating-actions">
+    <button class="btn btn-primary btn-fab" data-bs-toggle="modal" data-bs-target="#testReadModal" title="Test ANPR Read">
+        <i class="fas fa-plus"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentOffset = 0;
+let isLoading = false;
+let autoRefreshInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadReads();
+    loadCameraOptions();
+    setupAutoRefresh();
+    
+    // Search functionality
+    document.getElementById('searchBtn').addEventListener('click', () => {
+        currentOffset = 0;
+        loadReads();
+    });
+    
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            currentOffset = 0;
+            loadReads();
+        }
+    });
+    
+    // Filter functionality
+    document.getElementById('matchFilter').addEventListener('change', () => {
+        currentOffset = 0;
+        loadReads();
+    });
+    
+    document.getElementById('cameraFilter').addEventListener('change', () => {
+        currentOffset = 0;
+        loadReads();
+    });
+    
+    // Auto refresh toggle
+    document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
+});
+
+async function loadReads(append = false) {
+    if (isLoading) return;
+    isLoading = true;
+    
+    try {
+        const search = document.getElementById('searchInput').value;
+        const matchFilter = document.getElementById('matchFilter').value;
+        const cameraFilter = document.getElementById('cameraFilter').value;
+        
+        const params = new URLSearchParams({
+            skip: append ? currentOffset : 0,
+            limit: 50
+        });
+        
+        if (search) params.append('search', search);
+        if (matchFilter) params.append('hotlist_only', matchFilter === 'true');
+        
+                    const response = await axios.get('/anpr/reads?' + params.toString());
+        let reads = response.data;
+        
+        // Filter by camera on frontend
+        if (cameraFilter) {
+            reads = reads.filter(r => r.camera_id === cameraFilter);
+        }
+        
+        const tableBody = document.getElementById('readsTable');
+        
+        if (reads.length === 0 && !append) {
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No reads found</td></tr>';
+            document.getElementById('recordCount').textContent = '0';
+            return;
+        }
+        
+        const rowsHtml = reads.map(read => `
+            <tr class="${read.hotlist_match ? 'table-warning' : ''}">
+                <td>${formatDateTime(read.timestamp)}</td>
+                <td>
+                    <strong>${read.license_plate}</strong>
+                    ${read.hotlist_match ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Hotlist Match"></i>' : ''}
+                </td>
+                <td>${read.camera_id}</td>
+                <td>${read.location}</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        ${read.plate_image_path ? `
+                            <img src="${read.plate_image_path}" 
+                                 alt="Plate Image" 
+                                 class="img-thumbnail image-thumbnail" 
+                                 style="width: 60px; height: 40px; object-fit: cover; cursor: pointer;" 
+                                 onclick="expandImage('${read.plate_image_path}', 'Plate Image - ${read.license_plate}')"
+                                 title="Click to expand plate image">
+                        ` : ''}
+                        ${read.context_image_path ? `
+                            <img src="${read.context_image_path}" 
+                                 alt="Context Image" 
+                                 class="img-thumbnail image-thumbnail" 
+                                 style="width: 60px; height: 40px; object-fit: cover; cursor: pointer;" 
+                                 onclick="expandImage('${read.context_image_path}', 'Context Image - ${read.license_plate}')"
+                                 title="Click to expand context image">
+                        ` : ''}
+                        ${!read.plate_image_path && !read.context_image_path ? '<span class="text-muted">No images</span>' : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar ${getConfidenceColor(read.confidence)}" 
+                             role="progressbar" 
+                             style="width: ${read.confidence}%">
+                            ${read.confidence}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-${read.hotlist_match ? 'warning' : 'success'}">
+                        ${read.hotlist_match ? 'Match' : 'Clear'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="showReadDetails(${read.id})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        
+        if (append) {
+            tableBody.innerHTML += rowsHtml;
+            currentOffset += reads.length;
+        } else {
+            tableBody.innerHTML = rowsHtml;
+            currentOffset = reads.length;
+        }
+        
+        document.getElementById('recordCount').textContent = append ? 
+            (parseInt(document.getElementById('recordCount').textContent) + reads.length) : 
+            reads.length;
+        
+        // Show/hide load more button
+        document.getElementById('loadMoreBtn').style.display = reads.length === 50 ? 'block' : 'none';
+        
+    } catch (error) {
+        console.error('Error loading reads:', error);
+        showAlert('Error loading ANPR reads', 'danger');
+    } finally {
+        isLoading = false;
+    }
+}
+
+async function loadCameraOptions() {
+    try {
+                    const response = await axios.get('/anpr/reads?limit=1000');
+        const reads = response.data;
+        
+        const cameras = [...new Set(reads.map(r => r.camera_id))].sort();
+        const cameraSelect = document.getElementById('cameraFilter');
+        
+        cameras.forEach(camera => {
+            const option = document.createElement('option');
+            option.value = camera;
+            option.textContent = camera;
+            cameraSelect.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('Error loading camera options:', error);
+    }
+}
+
+function loadMore() {
+    loadReads(true);
+}
+
+async function showReadDetails(id) {
+    try {
+                    const response = await axios.get(`/anpr/reads/${id}`);
+        const read = response.data;
+        
+        const detailsHtml = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Basic Information</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>License Plate:</strong></td><td>${read.license_plate}</td></tr>
+                        <tr><td><strong>Camera ID:</strong></td><td>${read.camera_id}</td></tr>
+                        <tr><td><strong>Location:</strong></td><td>${read.location}</td></tr>
+                        <tr><td><strong>Timestamp:</strong></td><td>${formatDateTime(read.timestamp)}</td></tr>
+                        <tr><td><strong>Confidence:</strong></td><td>${read.confidence}%</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>Additional Details</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>Direction:</strong></td><td>${read.direction || 'N/A'}</td></tr>
+                        <tr><td><strong>Speed:</strong></td><td>${read.speed ? read.speed + ' mph' : 'N/A'}</td></tr>
+                        <tr><td><strong>Lane:</strong></td><td>${read.lane || 'N/A'}</td></tr>
+                        <tr><td><strong>Hotlist Match:</strong></td><td>
+                            <span class="badge bg-${read.hotlist_match ? 'warning' : 'success'}">
+                                ${read.hotlist_match ? 'Yes' : 'No'}
+                            </span>
+                        </td></tr>
+                    </table>
+                </div>
+            </div>
+            ${read.plate_image_path || read.context_image_path ? `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Images</h6>
+                        <div class="d-flex gap-3 justify-content-center">
+                            ${read.plate_image_path ? `
+                                <div class="text-center">
+                                    <div class="mb-2">
+                                        <img src="${read.plate_image_path}" 
+                                             alt="Plate Image" 
+                                             class="img-thumbnail" 
+                                             style="max-width: 200px; max-height: 150px; cursor: pointer;" 
+                                             onclick="expandImage('${read.plate_image_path}', 'Plate Image - ${read.license_plate}')">
+                                    </div>
+                                    <small class="text-muted">Plate Image</small>
+                                </div>
+                            ` : ''}
+                            ${read.context_image_path ? `
+                                <div class="text-center">
+                                    <div class="mb-2">
+                                        <img src="${read.context_image_path}" 
+                                             alt="Context Image" 
+                                             class="img-thumbnail" 
+                                             style="max-width: 200px; max-height: 150px; cursor: pointer;" 
+                                             onclick="expandImage('${read.context_image_path}', 'Context Image - ${read.license_plate}')">
+                                    </div>
+                                    <small class="text-muted">Context Image</small>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        document.getElementById('readDetailsBody').innerHTML = detailsHtml;
+        new bootstrap.Modal(document.getElementById('readDetailsModal')).show();
+        
+    } catch (error) {
+        console.error('Error loading read details:', error);
+        showAlert('Error loading read details', 'danger');
+    }
+}
+
+async function submitTestRead() {
+    const testData = {
+        license_plate: document.getElementById('testLicensePlate').value,
+        camera_id: document.getElementById('testCameraId').value,
+        location: document.getElementById('testLocation').value,
+        confidence: parseInt(document.getElementById('testConfidence').value),
+        direction: document.getElementById('testDirection').value || null,
+        speed: parseInt(document.getElementById('testSpeed').value) || null,
+        lane: parseInt(document.getElementById('testLane').value) || null
+    };
+    
+    try {
+                    await axios.post('/anpr/reads', testData);
+        bootstrap.Modal.getInstance(document.getElementById('testReadModal')).hide();
+        document.getElementById('testReadForm').reset();
+        document.getElementById('testConfidence').value = 85;
+        showAlert('Test read submitted successfully', 'success');
+        
+        // Refresh the reads
+        currentOffset = 0;
+        loadReads();
+        
+    } catch (error) {
+        console.error('Error submitting test read:', error);
+        showAlert('Error submitting test read', 'danger');
+    }
+}
+
+function setupAutoRefresh() {
+    const autoRefreshEnabled = document.getElementById('autoRefresh').checked;
+    
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    if (autoRefreshEnabled) {
+        autoRefreshInterval = setInterval(() => {
+            if (!isLoading) {
+                currentOffset = 0;
+                loadReads();
+            }
+        }, 30000); // 30 seconds
+    }
+}
+
+function getConfidenceColor(confidence) {
+    if (confidence >= 90) return 'bg-success';
+    if (confidence >= 75) return 'bg-warning';
+    return 'bg-danger';
+}
+
+function expandImage(imagePath, title) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('expandedImage');
+    const modalTitle = document.getElementById('imageModalTitle');
+    
+    modalImg.src = imagePath;
+    modalTitle.textContent = title;
+    
+    new bootstrap.Modal(modal).show();
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+}
+
+function showAlert(message, type) {
+    // Simple alert for now - could be enhanced with toast notifications
+    alert(message);
+}
+</script>
+
+<style>
+.floating-actions {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.btn-fab {
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+</style>
+{% endblock %} 

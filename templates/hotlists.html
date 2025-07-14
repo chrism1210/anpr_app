@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %}Hotlists - ANPR System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-list me-2"></i>
+                Vehicle Hotlists
+            </h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hotlistModal">
+                <i class="fas fa-plus me-2"></i>
+                Add Hotlist
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchInput" placeholder="Search license plates, descriptions, or categories...">
+            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="categoryFilter">
+            <option value="">All Categories</option>
+            <option value="stolen">Stolen</option>
+            <option value="wanted">Wanted</option>
+            <option value="bolo">BOLO</option>
+            <option value="suspicious">Suspicious</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>License Plate</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Description</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="hotlistsTable">
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Hotlist Modal -->
+<div class="modal fade" id="hotlistModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add Hotlist Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="hotlistForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="licensePlate" class="form-label">License Plate *</label>
+                                <input type="text" class="form-control" id="licensePlate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category *</label>
+                                <select class="form-select" id="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="stolen">Stolen</option>
+                                    <option value="wanted">Wanted</option>
+                                    <option value="bolo">BOLO</option>
+                                    <option value="suspicious">Suspicious</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="createdBy" class="form-label">Created By *</label>
+                                <input type="text" class="form-control" id="createdBy" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description *</label>
+                        <textarea class="form-control" id="description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="vehicleMake" class="form-label">Vehicle Make</label>
+                                <input type="text" class="form-control" id="vehicleMake">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="vehicleModel" class="form-label">Vehicle Model</label>
+                                <input type="text" class="form-control" id="vehicleModel">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="vehicleColor" class="form-label">Vehicle Color</label>
+                                <input type="text" class="form-control" id="vehicleColor">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="vehicleYear" class="form-label">Vehicle Year</label>
+                                <input type="number" class="form-control" id="vehicleYear" min="1900" max="2030">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ownerName" class="form-label">Owner Name</label>
+                        <input type="text" class="form-control" id="ownerName">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="expiryDate" class="form-label">Expiry Date</label>
+                                <input type="datetime-local" class="form-control" id="expiryDate">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check" style="margin-top: 2rem;">
+                                <input type="checkbox" class="form-check-input" id="isActive" checked>
+                                <label class="form-check-label" for="isActive">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentHotlistId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadHotlists();
+    
+    // Search functionality
+    document.getElementById('searchBtn').addEventListener('click', loadHotlists);
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadHotlists();
+        }
+    });
+    
+    // Filter functionality
+    document.getElementById('categoryFilter').addEventListener('change', loadHotlists);
+    document.getElementById('statusFilter').addEventListener('change', loadHotlists);
+    
+    // Form submission
+    document.getElementById('saveBtn').addEventListener('click', saveHotlist);
+    
+    // Reset form when modal closes
+    document.getElementById('hotlistModal').addEventListener('hidden.bs.modal', function () {
+        resetForm();
+    });
+});
+
+async function loadHotlists() {
+    try {
+        const search = document.getElementById('searchInput').value;
+        const category = document.getElementById('categoryFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        
+        let url = '/api/hotlists';
+        const params = new URLSearchParams();
+        
+        if (search) params.append('search', search);
+        if (params.toString()) url += '?' + params.toString();
+        
+        const response = await axios.get(url);
+        let hotlists = response.data;
+        
+        // Filter by category and status on frontend
+        if (category) {
+            hotlists = hotlists.filter(h => h.category === category);
+        }
+        if (status) {
+            hotlists = hotlists.filter(h => status === 'active' ? h.is_active : !h.is_active);
+        }
+        
+        const tableBody = document.getElementById('hotlistsTable');
+        
+        if (hotlists.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hotlists found</td></tr>';
+            return;
+        }
+        
+        tableBody.innerHTML = hotlists.map(hotlist => `
+            <tr>
+                <td><strong>${hotlist.license_plate}</strong></td>
+                <td>
+                    <span class="badge bg-${getCategoryColor(hotlist.category)}">${hotlist.category}</span>
+                </td>
+                <td>
+                    <span class="badge bg-${getPriorityColor(hotlist.priority)}">${hotlist.priority}</span>
+                </td>
+                <td>${hotlist.description}</td>
+                <td>${formatDate(hotlist.created_at)}</td>
+                <td>
+                    <span class="badge bg-${hotlist.is_active ? 'success' : 'secondary'}">
+                        ${hotlist.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editHotlist(${hotlist.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHotlist(${hotlist.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error loading hotlists:', error);
+        showAlert('Error loading hotlists', 'danger');
+    }
+}
+
+async function editHotlist(id) {
+    try {
+        const response = await axios.get(`/api/hotlists/${id}`);
+        const hotlist = response.data;
+        
+        currentHotlistId = id;
+        document.getElementById('modalTitle').textContent = 'Edit Hotlist Entry';
+        
+        // Populate form
+        document.getElementById('licensePlate').value = hotlist.license_plate;
+        document.getElementById('category').value = hotlist.category;
+        document.getElementById('priority').value = hotlist.priority;
+        document.getElementById('createdBy').value = hotlist.created_by;
+        document.getElementById('description').value = hotlist.description;
+        document.getElementById('vehicleMake').value = hotlist.vehicle_make || '';
+        document.getElementById('vehicleModel').value = hotlist.vehicle_model || '';
+        document.getElementById('vehicleColor').value = hotlist.vehicle_color || '';
+        document.getElementById('vehicleYear').value = hotlist.vehicle_year || '';
+        document.getElementById('ownerName').value = hotlist.owner_name || '';
+        document.getElementById('notes').value = hotlist.notes || '';
+        document.getElementById('isActive').checked = hotlist.is_active;
+        
+        if (hotlist.expiry_date) {
+            document.getElementById('expiryDate').value = new Date(hotlist.expiry_date).toISOString().slice(0, 16);
+        }
+        
+        new bootstrap.Modal(document.getElementById('hotlistModal')).show();
+        
+    } catch (error) {
+        console.error('Error loading hotlist:', error);
+        showAlert('Error loading hotlist details', 'danger');
+    }
+}
+
+async function deleteHotlist(id) {
+    if (!confirm('Are you sure you want to delete this hotlist entry?')) return;
+    
+    try {
+        await axios.delete(`/api/hotlists/${id}`);
+        showAlert('Hotlist deleted successfully', 'success');
+        loadHotlists();
+    } catch (error) {
+        console.error('Error deleting hotlist:', error);
+        showAlert('Error deleting hotlist', 'danger');
+    }
+}
+
+async function saveHotlist() {
+    const formData = {
+        license_plate: document.getElementById('licensePlate').value,
+        category: document.getElementById('category').value,
+        priority: document.getElementById('priority').value,
+        created_by: document.getElementById('createdBy').value,
+        description: document.getElementById('description').value,
+        vehicle_make: document.getElementById('vehicleMake').value || null,
+        vehicle_model: document.getElementById('vehicleModel').value || null,
+        vehicle_color: document.getElementById('vehicleColor').value || null,
+        vehicle_year: document.getElementById('vehicleYear').value || null,
+        owner_name: document.getElementById('ownerName').value || null,
+        notes: document.getElementById('notes').value || null,
+        is_active: document.getElementById('isActive').checked,
+        expiry_date: document.getElementById('expiryDate').value || null
+    };
+    
+    try {
+        if (currentHotlistId) {
+            await axios.put(`/api/hotlists/${currentHotlistId}`, formData);
+            showAlert('Hotlist updated successfully', 'success');
+        } else {
+            await axios.post('/api/hotlists', formData);
+            showAlert('Hotlist created successfully', 'success');
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('hotlistModal')).hide();
+        loadHotlists();
+        
+    } catch (error) {
+        console.error('Error saving hotlist:', error);
+        showAlert('Error saving hotlist', 'danger');
+    }
+}
+
+function resetForm() {
+    currentHotlistId = null;
+    document.getElementById('modalTitle').textContent = 'Add Hotlist Entry';
+    document.getElementById('hotlistForm').reset();
+    document.getElementById('priority').value = 'medium';
+    document.getElementById('isActive').checked = true;
+}
+
+function getCategoryColor(category) {
+    const colors = {
+        stolen: 'danger',
+        wanted: 'warning',
+        bolo: 'info',
+        suspicious: 'secondary'
+    };
+    return colors[category] || 'primary';
+}
+
+function getPriorityColor(priority) {
+    const colors = {
+        low: 'success',
+        medium: 'warning',
+        high: 'danger',
+        critical: 'dark'
+    };
+    return colors[priority] || 'primary';
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+}
+
+function showAlert(message, type) {
+    // Simple alert for now - could be enhanced with toast notifications
+    alert(message);
+}
+</script>
+{% endblock %} 

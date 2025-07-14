@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Integrations - ANPR System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-plug me-2"></i>
+            BOF Integration
+        </h1>
+        <p class="text-muted">Configure BOF (British Optical Foundation) protocol for ANPR data transmission</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    BOF Management Server
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="bofConfigForm">
+                    <div class="mb-3">
+                        <label for="bofHost" class="form-label">BOF Server Host/IP *</label>
+                        <input type="text" class="form-control" id="bofHost" required 
+                               placeholder="192.168.1.100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="bofUsername" class="form-label">Username *</label>
+                        <input type="text" class="form-control" id="bofUsername" required 
+                               placeholder="anpr_user">
+                    </div>
+                    <div class="mb-3">
+                        <label for="bofPassword" class="form-label">Password *</label>
+                        <input type="password" class="form-control" id="bofPassword" required 
+                               placeholder="Enter password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="feedId" class="form-label">Feed Identifier *</label>
+                        <input type="text" class="form-control" id="feedId" required 
+                               placeholder="FEED001">
+                    </div>
+                    <div class="mb-3">
+                        <label for="sourceId" class="form-label">Source Identifier *</label>
+                        <input type="text" class="form-control" id="sourceId" required 
+                               placeholder="SOURCE001">
+                    </div>
+                    <div class="mb-3">
+                        <label for="hotlistSyncUrl" class="form-label">Hotlist Sync URL</label>
+                        <input type="url" class="form-control" id="hotlistSyncUrl" 
+                               placeholder="http://external-system/api/hotlists">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        Configure BOF Integration
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-network-wired me-2"></i>
+                    Integration Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="integrationStatus">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-outline-primary btn-sm me-2" onclick="checkConnectivity()">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Check Status
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="syncHotlists()">
+                        <i class="fas fa-download me-1"></i>
+                        Sync Hotlists
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#testModal">
+                        <i class="fas fa-flask me-1"></i>
+                        Test Integration
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    BOF Protocol Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>BOF Operations</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-1"></i> sendCompactCapture</li>
+                            <li><i class="fas fa-check text-success me-1"></i> addBinaryCaptureData</li>
+                            <li><i class="fas fa-check text-success me-1"></i> SOAP-based web services</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Data Transmission</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-1"></i> Textual data first</li>
+                            <li><i class="fas fa-check text-success me-1"></i> Binary images separate</li>
+                            <li><i class="fas fa-check text-success me-1"></i> Real-time processing</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Image Requirements</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-1"></i> Plate crop: 120x60px max</li>
+                            <li><i class="fas fa-check text-success me-1"></i> Context image: 25KB max</li>
+                            <li><i class="fas fa-check text-success me-1"></i> Base64 encoded</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Service Endpoints</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <code>http://&lt;host&gt;/bof/services/AnprService</code>
+                            <p class="small text-muted">Main BOF web service endpoint</p>
+                        </div>
+                        <div class="col-md-6">
+                            <code>sendCompactCapture</code> / <code>addBinaryCaptureData</code>
+                            <p class="small text-muted">SOAP operations for data transmission</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Integration Modal -->
+<div class="modal fade" id="testModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test BOF Integration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Send a test ANPR read through the BOF integration:</p>
+                <form id="testForm">
+                    <div class="mb-3">
+                        <label for="testPlate" class="form-label">Test License Plate</label>
+                        <input type="text" class="form-control" id="testPlate" value="TEST123" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="testCamera" class="form-label">Camera ID</label>
+                        <input type="text" class="form-control" id="testCamera" value="CAM001" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="testLocation" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="testLocation" value="Test Location" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendTestRead()">Send Test Read</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadIntegrationStatus();
+    
+    // Form submission
+    document.getElementById('bofConfigForm').addEventListener('submit', configureIntegration);
+});
+
+async function configureIntegration(e) {
+    e.preventDefault();
+    
+    const config = {
+        bof_host: document.getElementById('bofHost').value,
+        bof_username: document.getElementById('bofUsername').value,
+        bof_password: document.getElementById('bofPassword').value,
+        feed_id: document.getElementById('feedId').value,
+        source_id: document.getElementById('sourceId').value,
+        hotlist_sync_url: document.getElementById('hotlistSyncUrl').value || null
+    };
+    
+    try {
+        const response = await axios.post('/anpr/configure', config);
+        Utils.showNotification('BOF integration configured successfully', 'success');
+        loadIntegrationStatus();
+    } catch (error) {
+        console.error('Configuration failed:', error);
+        Utils.showNotification('Configuration failed: ' + (error.response?.data?.detail || error.message), 'danger');
+    }
+}
+
+async function loadIntegrationStatus() {
+    try {
+        const connectivityResponse = await axios.get('/anpr/connectivity');
+        const connectivity = connectivityResponse.data;
+        
+        const statusContainer = document.getElementById('integrationStatus');
+        statusContainer.innerHTML = `
+            <div class="mb-3">
+                <h6>BOF Integration Status</h6>
+                <div class="d-flex align-items-center mb-2">
+                    <span class="status-indicator ${connectivity.bof_enabled ? 'status-active' : 'status-inactive'}"></span>
+                    <span>BOF Integration: ${connectivity.bof_enabled ? 'Enabled' : 'Disabled'}</span>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <span class="status-indicator ${connectivity.bof_configured ? 'status-active' : 'status-inactive'}"></span>
+                    <span>BOF Configuration: ${connectivity.bof_configured ? 'Configured' : 'Not Configured'}</span>
+                </div>
+                ${connectivity.bof_host ? `
+                <div class="d-flex align-items-center mb-2">
+                    <span class="status-indicator status-active"></span>
+                    <span>BOF Server: ${connectivity.bof_host}</span>
+                </div>
+                ` : ''}
+                ${connectivity.hotlist_sync_url ? `
+                <div class="d-flex align-items-center mb-2">
+                    <span class="status-indicator status-active"></span>
+                    <span>Hotlist Sync: ${connectivity.hotlist_sync_url}</span>
+                </div>
+                ` : ''}
+            </div>
+            
+            <div class="mb-3">
+                <h6>Protocol Features</h6>
+                <div class="small">
+                    <strong>Operations:</strong> sendCompactCapture, addBinaryCaptureData<br>
+                    <strong>Data Types:</strong> Textual records, Plate images, Context images<br>
+                    <strong>Transport:</strong> SOAP/HTTP
+                </div>
+            </div>
+            
+            <div class="small text-muted">
+                Last sync: ${formatDate(connectivity.last_sync)}
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error loading integration status:', error);
+        document.getElementById('integrationStatus').innerHTML = 
+            '<div class="alert alert-warning">Unable to load integration status</div>';
+    }
+}
+
+async function checkConnectivity() {
+    try {
+        Utils.showNotification('Checking BOF connectivity...', 'info');
+        await loadIntegrationStatus();
+        Utils.showNotification('Connectivity check completed', 'success');
+    } catch (error) {
+        Utils.showNotification('Connectivity check failed', 'danger');
+    }
+}
+
+async function syncHotlists() {
+    try {
+        const response = await axios.post('/anpr/hotlists/sync');
+        Utils.showNotification(response.data.message, 'success');
+        // Reload status after sync
+        setTimeout(loadIntegrationStatus, 1000);
+    } catch (error) {
+        console.error('Hotlist sync failed:', error);
+        Utils.showNotification('Hotlist sync failed: ' + (error.response?.data?.detail || error.message), 'danger');
+    }
+}
+
+async function sendTestRead() {
+    const testData = {
+        license_plate: document.getElementById('testPlate').value,
+        camera_id: document.getElementById('testCamera').value,
+        location: document.getElementById('testLocation').value,
+        confidence: 95,
+        direction: "north",
+        speed: 30
+    };
+    
+    try {
+        const response = await axios.post('/anpr/reads', testData);
+        bootstrap.Modal.getInstance(document.getElementById('testModal')).hide();
+        Utils.showNotification('Test read sent successfully - check logs for BOF integration results', 'success');
+    } catch (error) {
+        console.error('Test read failed:', error);
+        Utils.showNotification('Test read failed', 'danger');
+    }
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleString();
+}
+</script>
+
+<style>
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-active {
+    background-color: #28a745;
+}
+
+.status-inactive {
+    background-color: #6c757d;
+}
+
+.status-warning {
+    background-color: #ffc107;
+}
+
+.status-error {
+    background-color: #dc3545;
+}
+</style>
+{% endblock %} 
