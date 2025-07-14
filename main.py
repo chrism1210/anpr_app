@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request, BackgroundTasks, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, Depends, Request, File, UploadFile, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -15,7 +15,6 @@ from pathlib import Path
 from database import SessionLocal, engine, Base
 from models import Hotlist, ANPRRead
 from schemas import HotlistCreate, HotlistUpdate, HotlistResponse, ANPRReadCreate, ANPRReadResponse
-from integrations import integration_manager
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -62,10 +61,7 @@ async def anpr_reads_page(request: Request):
     """ANPR reads monitoring page"""
     return templates.TemplateResponse("anpr_reads.html", {"request": request})
 
-@app.get("/integrations", response_class=HTMLResponse)
-async def integrations_page(request: Request):
-    """Third-party integrations configuration page"""
-    return templates.TemplateResponse("integrations.html", {"request": request})
+
 
 # API Routes - Hotlist Management
 @app.post("/api/hotlists", response_model=HotlistResponse)
@@ -133,7 +129,7 @@ async def delete_hotlist(hotlist_id: int, db: Session = Depends(get_db)):
 
 # API Routes - ANPR Reads
 @app.post("/anpr/reads", response_model=ANPRReadResponse)
-async def ingest_anpr_read(anpr_read: ANPRReadCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def ingest_anpr_read(anpr_read: ANPRReadCreate, db: Session = Depends(get_db)):
     """Ingest ANPR read record from camera and process through BOF protocol"""
     db_anpr_read = ANPRRead(**anpr_read.model_dump())
     
@@ -147,25 +143,13 @@ async def ingest_anpr_read(anpr_read: ANPRReadCreate, background_tasks: Backgrou
     db.commit()
     db.refresh(db_anpr_read)
     
-    # Convert to response model for integrations
+    # Convert to response model
     anpr_response = ANPRReadResponse.model_validate(db_anpr_read)
-    
-    # Process through third-party integrations in background
-    # This ensures 4-second end-to-end requirement as per SDR-143
-    background_tasks.add_task(process_anpr_integrations, anpr_response)
     
     return anpr_response
 
-async def process_anpr_integrations(anpr_read: ANPRReadResponse):
-    """Background task to process ANPR read through third-party integrations"""
-    try:
-        await integration_manager.process_anpr_read(anpr_read)
-    except Exception as e:
-        logger.error(f"Integration processing failed for {anpr_read.license_plate}: {e}")
-
 @app.post("/anpr/reads/with-images", response_model=ANPRReadResponse)
 async def ingest_anpr_read_with_images(
-    background_tasks: BackgroundTasks,
     license_plate: str = Form(...),
     camera_id: str = Form(...),
     location: str = Form(...),
@@ -272,32 +256,7 @@ async def ingest_anpr_read_with_images(
         context_image_data = await context_image.read()
     
     # Process through BOF integration with images
-    background_tasks.add_task(
-        process_anpr_integrations_with_images, 
-        anpr_response, 
-        plate_image_data, 
-        context_image_data
-    )
-    
     return anpr_response
-
-async def process_anpr_integrations_with_images(
-    anpr_read: ANPRReadResponse, 
-    plate_image: bytes = None, 
-    context_image: bytes = None
-):
-    """
-    Process ANPR integrations with optional binary image data
-    """
-    try:
-        # Process through BOF integration if available
-        if integration_manager.bof_integration:
-            await integration_manager.process_anpr_read(anpr_read, plate_image, context_image)
-        else:
-            logger.warning("BOF integration not initialized")
-            
-    except Exception as e:
-        logger.error(f"Error processing ANPR integrations: {e}")
 
 @app.get("/anpr/reads", response_model=List[ANPRReadResponse])
 async def get_anpr_reads(
@@ -382,63 +341,13 @@ async def sample_hotlist_sync():
         ]
     }
 
-# API Routes - Third-party Integrations (BOF Only)
+# API Routes - System Status
 @app.get("/anpr/connectivity")
 async def get_connectivity():
-    """Get connectivity status to BOF Management Server for dashboard display"""
-    return integration_manager.get_connectivity_status()
+    """Get connectivity status for dashboard display"""
+    return {"status": "disconnected", "message": "No integrations configured"}
 
-@app.post("/anpr/configure")
-async def configure_integrations(config: dict):
-    """
-    Configure BOF integration
-    Expected config format:
-    {
-        "bof_host": "192.168.1.100",
-        "bof_username": "anpr_user",
-        "bof_password": "password123",
-        "feed_id": "FEED001",
-        "source_id": "SOURCE001",
-        "hotlist_sync_url": "http://external-system/api/hotlists"
-    }
-    """
-    try:
-        await integration_manager.initialize(
-            bof_host=config.get("bof_host"),
-            bof_username=config.get("bof_username"),
-            bof_password=config.get("bof_password"),
-            feed_id=config.get("feed_id"),
-            source_id=config.get("source_id"),
-            hotlist_sync_url=config.get("hotlist_sync_url")
-        )
-        return {"status": "success", "message": "BOF integration configured successfully"}
-    except Exception as e:
-        logger.error(f"BOF integration configuration failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Configuration failed: {str(e)}")
 
-@app.post("/anpr/hotlists/sync")
-async def sync_hotlists(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    """Trigger hotlist synchronization from configured source"""
-    background_tasks.add_task(sync_hotlists_background, db)
-    return {"status": "success", "message": "Hotlist sync initiated"}
-
-async def sync_hotlists_background(db: Session):
-    """Background task for hotlist synchronization"""
-    try:
-        success = await integration_manager.sync_hotlists(db)
-        logger.info(f"Hotlist sync completed: {success}")
-    except Exception as e:
-        logger.error(f"Hotlist sync failed: {e}")
-
-@app.get("/anpr/status")
-async def get_integration_status():
-    """Get detailed integration status"""
-    return {
-        "integration_manager": integration_manager.get_connectivity_status(),
-        "protocols_supported": ["UTMC", "BOF", "BOF2"],
-        "ecom_features": ["hotlist_sync", "read_offload", "configuration_sync"],
-        "management_server_features": ["plate_data_offload", "image_offload", "batch_operations"]
-    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
