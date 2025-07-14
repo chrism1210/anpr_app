@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Reset form when modal closes
     document.getElementById('hotlistGroupModal').addEventListener('hidden.bs.modal', function () {
-        resetForm();
+        resetHotlistGroupForm();
     });
     
     // Add initial vehicle row
@@ -375,22 +375,38 @@ async function editHotlistGroup(id) {
         // Populate form
         document.getElementById('hotlistName').value = group.name;
         document.getElementById('category').value = group.category;
-        document.getElementById('priority').value = hotlist.priority;
-        document.getElementById('createdBy').value = hotlist.created_by;
-        document.getElementById('description').value = hotlist.description;
-        document.getElementById('vehicleMake').value = hotlist.vehicle_make || '';
-        document.getElementById('vehicleModel').value = hotlist.vehicle_model || '';
-        document.getElementById('vehicleColor').value = hotlist.vehicle_color || '';
-        document.getElementById('vehicleYear').value = hotlist.vehicle_year || '';
-        document.getElementById('ownerName').value = hotlist.owner_name || '';
-        document.getElementById('notes').value = hotlist.notes || '';
-        document.getElementById('isActive').checked = hotlist.is_active;
+        document.getElementById('priority').value = group.priority;
+        document.getElementById('createdBy').value = group.created_by;
+        document.getElementById('description').value = group.description;
+        document.getElementById('isActive').checked = group.is_active;
         
-        if (hotlist.expiry_date) {
-            document.getElementById('expiryDate').value = new Date(hotlist.expiry_date).toISOString().slice(0, 16);
+        if (group.expiry_date) {
+            document.getElementById('expiryDate').value = new Date(group.expiry_date).toISOString().slice(0, 16);
         }
         
-        new bootstrap.Modal(document.getElementById('hotlistModal')).show();
+        // Clear existing vehicles
+        document.getElementById('vehiclesContainer').innerHTML = '';
+        vehicleCounter = 0;
+        
+        // Add vehicles from the group
+        if (group.vehicles && group.vehicles.length > 0) {
+            group.vehicles.forEach(vehicle => {
+                addVehicleRow();
+                const vehicleId = vehicleCounter - 1;
+                document.getElementById(`licensePlate-${vehicleId}`).value = vehicle.license_plate;
+                document.getElementById(`vehicleMake-${vehicleId}`).value = vehicle.vehicle_make || '';
+                document.getElementById(`vehicleModel-${vehicleId}`).value = vehicle.vehicle_model || '';
+                document.getElementById(`vehicleColor-${vehicleId}`).value = vehicle.vehicle_color || '';
+                document.getElementById(`vehicleYear-${vehicleId}`).value = vehicle.vehicle_year || '';
+                document.getElementById(`ownerName-${vehicleId}`).value = vehicle.owner_name || '';
+                document.getElementById(`notes-${vehicleId}`).value = vehicle.notes || '';
+            });
+        } else {
+            // Add one empty vehicle row if no vehicles exist
+            addVehicleRow();
+        }
+        
+        new bootstrap.Modal(document.getElementById('hotlistGroupModal')).show();
         
     } catch (error) {
         console.error('Error loading hotlist:', error);
@@ -446,12 +462,82 @@ async function saveHotlist() {
     }
 }
 
+async function saveHotlistGroup() {
+    try {
+        // Collect form data
+        const formData = {
+            name: document.getElementById('hotlistName').value,
+            category: document.getElementById('category').value,
+            priority: document.getElementById('priority').value,
+            created_by: document.getElementById('createdBy').value,
+            description: document.getElementById('description').value,
+            is_active: document.getElementById('isActive').checked,
+            expiry_date: document.getElementById('expiryDate').value || null,
+            vehicles: []
+        };
+        
+        // Collect vehicles data
+        const vehicleCards = document.querySelectorAll('#vehiclesContainer .card');
+        vehicleCards.forEach(card => {
+            const vehicleId = card.id.split('-')[1];
+            const licensePlate = document.getElementById(`licensePlate-${vehicleId}`).value;
+            
+            // Only add vehicle if license plate is provided
+            if (licensePlate.trim()) {
+                formData.vehicles.push({
+                    license_plate: licensePlate,
+                    vehicle_make: document.getElementById(`vehicleMake-${vehicleId}`).value || null,
+                    vehicle_model: document.getElementById(`vehicleModel-${vehicleId}`).value || null,
+                    vehicle_color: document.getElementById(`vehicleColor-${vehicleId}`).value || null,
+                    vehicle_year: document.getElementById(`vehicleYear-${vehicleId}`).value || null,
+                    owner_name: document.getElementById(`ownerName-${vehicleId}`).value || null,
+                    notes: document.getElementById(`notes-${vehicleId}`).value || null
+                });
+            }
+        });
+        
+        // Validate that at least one vehicle is provided
+        if (formData.vehicles.length === 0) {
+            showAlert('Please add at least one vehicle with a license plate', 'danger');
+            return;
+        }
+        
+        let response;
+        if (currentHotlistGroupId) {
+            response = await axios.put(`/api/hotlist-groups/${currentHotlistGroupId}`, formData);
+            showAlert('Hotlist group updated successfully', 'success');
+        } else {
+            response = await axios.post('/api/hotlist-groups', formData);
+            showAlert('Hotlist group created successfully', 'success');
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('hotlistGroupModal')).hide();
+        loadHotlistGroups();
+        resetHotlistGroupForm();
+        
+    } catch (error) {
+        console.error('Error saving hotlist group:', error);
+        showAlert('Error saving hotlist group: ' + (error.response?.data?.detail || error.message), 'danger');
+    }
+}
+
 function resetForm() {
     currentHotlistId = null;
     document.getElementById('modalTitle').textContent = 'Add Hotlist Entry';
     document.getElementById('hotlistForm').reset();
     document.getElementById('priority').value = 'medium';
     document.getElementById('isActive').checked = true;
+}
+
+function resetHotlistGroupForm() {
+    currentHotlistGroupId = null;
+    document.getElementById('modalTitle').textContent = 'Add Hotlist Group';
+    document.getElementById('hotlistGroupForm').reset();
+    document.getElementById('priority').value = 'medium';
+    document.getElementById('isActive').checked = true;
+    document.getElementById('vehiclesContainer').innerHTML = '';
+    vehicleCounter = 0;
+    addVehicleRow();
 }
 
 function getCategoryColor(category) {
@@ -483,5 +569,4 @@ function showAlert(message, type) {
     alert(message);
 }
 </script>
-{% endblock %} 
 {% endblock %} 

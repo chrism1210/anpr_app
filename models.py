@@ -43,6 +43,9 @@ class Hotlist(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     
+    # BOF-specific fields for revision tracking
+    revision = Column(BigInteger, default=1)  # Revision number for this hotlist entry
+    
     # Relationships
     hotlist_group = relationship("HotlistGroup", back_populates="vehicles")
     anpr_reads = relationship("ANPRRead", back_populates="hotlist")
