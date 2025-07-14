@@ -390,6 +390,14 @@ async def get_anpr_reads(
     anpr_reads = query.order_by(ANPRRead.timestamp.desc()).offset(skip).limit(limit).all()
     return anpr_reads
 
+@app.get("/anpr/reads/{read_id}", response_model=ANPRReadResponse)
+async def get_anpr_read(read_id: int, db: Session = Depends(get_db)):
+    """Get a specific ANPR read by ID"""
+    anpr_read = db.query(ANPRRead).filter(ANPRRead.id == read_id).first()
+    if not anpr_read:
+        raise HTTPException(status_code=404, detail="ANPR read not found")
+    return anpr_read
+
 # API Routes - Statistics
 @app.get("/api/stats")
 async def get_stats(db: Session = Depends(get_db)):
