@@ -246,6 +246,132 @@
 			"description": "BOF (Back Office Facility) hotlist synchronization endpoints according to SDR-143 specification"
 		},
 		{
+			"name": "BOF Capture Services",
+			"item": [
+				{
+					"name": "Send Capture (BOF)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vrm\": \"{{license_plate}}\",\n    \"feedID\": 1,\n    \"sourceID\": 1,\n    \"cameraID\": 1,\n    \"plateImage\": null,\n    \"overviewImage\": null,\n    \"captureDate\": \"2023-01-01T12:00:00Z\",\n    \"latitude\": 51.5074,\n    \"longitude\": -0.1278,\n    \"cameraPresetPosition\": 1,\n    \"cameraPan\": \"0\",\n    \"cameraTilt\": \"0\",\n    \"cameraZoom\": \"1x\",\n    \"confidencePercentage\": 95,\n    \"motionTowardCamera\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bof/services/InputCaptureWebService/sendCapture",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"InputCaptureWebService",
+								"sendCapture"
+							]
+						},
+						"description": "BOF: Sends a complete capture record to BOF2 system."
+					},
+					"response": []
+				},
+				{
+					"name": "Send Compact Capture (BOF)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"capture\": \"signature | username | {{license_plate}} | 1 | 1 | 1 | 2023-01-01T12:00:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 95 | true\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bof/services/InputCaptureWebService/sendCompactCapture",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"InputCaptureWebService",
+								"sendCompactCapture"
+							]
+						},
+						"description": "BOF: Sends a compact (pipe-delimited) capture record for bandwidth efficiency."
+					},
+					"response": []
+				},
+				{
+					"name": "Send Compound Capture (BOF)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"captures\": [\n        \"signature | username | {{license_plate}} | 1 | 1 | 1 | 2023-01-01T12:00:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 95 | true\",\n        \"signature | username | ABC456 | 1 | 1 | 2 | 2023-01-01T12:01:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 92 | false\"\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bof/services/InputCaptureWebService/sendCompoundCapture",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"InputCaptureWebService",
+								"sendCompoundCapture"
+							]
+						},
+						"description": "BOF: Sends multiple capture records in a single request (max 50)."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Binary Capture Data (BOF)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"signature\": \"signature\",\n    \"username\": \"admin\",\n    \"vrm\": \"{{license_plate}}\",\n    \"feedIdentifier\": 1,\n    \"sourceIdentifier\": 1,\n    \"cameraIdentifier\": 1,\n    \"captureTime\": \"2023-01-01T12:00:00Z\",\n    \"binaryImage\": \"base64_encoded_image_data\",\n    \"binaryDataType\": \"P\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bof/services/InputBinaryDataWebService/addBinaryCaptureData",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bof",
+								"services",
+								"InputBinaryDataWebService",
+								"addBinaryCaptureData"
+							]
+						},
+						"description": "BOF: Adds binary image data to a previously sent capture record."
+					},
+					"response": []
+				}
+			],
+			"description": "BOF (Back Office Facility) capture input endpoints according to SDR-143 specification. NOTE: These endpoints are not yet implemented - they show the expected BOF protocol format."
+		},
+		{
 			"name": "Hotlist Management API",
 			"item": [
 				{
@@ -421,15 +547,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"license_plate\": \"ABC123\",\n    \"confidence\": 0.95,\n    \"camera_id\": \"CAM001\",\n    \"location\": \"Main Street & 1st Ave\",\n    \"direction\": \"northbound\",\n    \"vehicle_make\": \"Toyota\",\n    \"vehicle_model\": \"Camry\",\n    \"vehicle_color\": \"Blue\",\n    \"vehicle_year\": 2020\n}"
+							"raw": "{\n    \"license_plate\": \"ABC123\",\n    \"confidence\": 95,\n    \"camera_id\": \"CAM001\",\n    \"location\": \"Main Street & 1st Ave\",\n    \"direction\": \"northbound\",\n    \"speed\": 50,\n    \"lane\": 1\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/anpr/reads",
+							"raw": "{{base_url}}/anpr/reads",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
-								"api",
 								"anpr",
 								"reads"
 							]
@@ -439,17 +564,86 @@
 					"response": []
 				},
 				{
+					"name": "Submit ANPR Read with Images",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "license_plate",
+									"value": "ABC123",
+									"type": "text"
+								},
+								{
+									"key": "camera_id",
+									"value": "CAM001",
+									"type": "text"
+								},
+								{
+									"key": "location",
+									"value": "Main Street & 1st Ave",
+									"type": "text"
+								},
+								{
+									"key": "confidence",
+									"value": "95",
+									"type": "text"
+								},
+								{
+									"key": "direction",
+									"value": "northbound",
+									"type": "text"
+								},
+								{
+									"key": "speed",
+									"value": "50",
+									"type": "text"
+								},
+								{
+									"key": "lane",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "plate_image",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "context_image",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/anpr/reads/with-images",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"anpr",
+								"reads",
+								"with-images"
+							]
+						},
+						"description": "Submits a new ANPR read with plate and context images."
+					},
+					"response": []
+				},
+				{
 					"name": "Get All ANPR Reads",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/anpr/reads?skip=0&limit=50",
+							"raw": "{{base_url}}/anpr/reads?skip=0&limit=50",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
-								"api",
 								"anpr",
 								"reads"
 							],
@@ -463,31 +657,51 @@
 									"key": "limit",
 									"value": "50",
 									"description": "Maximum number of records to return"
+								},
+								{
+									"key": "hotlist_only",
+									"value": "false",
+									"description": "Filter to only hotlist matches"
+								},
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search term for license plate, camera ID, or location"
 								}
 							]
 						},
-						"description": "Retrieves all ANPR reads with pagination support."
+						"description": "Retrieves all ANPR reads with pagination and filtering support."
 					},
 					"response": []
 				},
 				{
-					"name": "Get ANPR Read by ID",
+					"name": "Get Hotlist Matches Only",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/anpr/reads/{{read_id}}",
+							"raw": "{{base_url}}/anpr/reads?hotlist_only=true&limit=50",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
-								"api",
 								"anpr",
-								"reads",
-								"{{read_id}}"
+								"reads"
+							],
+							"query": [
+								{
+									"key": "hotlist_only",
+									"value": "true",
+									"description": "Filter to only hotlist matches"
+								},
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Maximum number of records to return"
+								}
 							]
 						},
-						"description": "Retrieves a specific ANPR read by ID."
+						"description": "Retrieves only ANPR reads that matched hotlist entries."
 					},
 					"response": []
 				},
@@ -497,30 +711,23 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/anpr/reads/search?license_plate={{license_plate}}&camera_id={{camera_id}}",
+							"raw": "{{base_url}}/anpr/reads?search={{license_plate}}",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
-								"api",
 								"anpr",
-								"reads",
-								"search"
+								"reads"
 							],
 							"query": [
 								{
-									"key": "license_plate",
+									"key": "search",
 									"value": "{{license_plate}}",
-									"description": "License plate to search for"
-								},
-								{
-									"key": "camera_id",
-									"value": "{{camera_id}}",
-									"description": "Camera ID to filter by"
+									"description": "Search term for license plate, camera ID, or location"
 								}
 							]
 						},
-						"description": "Searches ANPR reads by license plate and/or camera ID."
+						"description": "Searches ANPR reads by license plate, camera ID, or location."
 					},
 					"response": []
 				}
@@ -649,6 +856,24 @@
 			"value": "CAM001",
 			"type": "string",
 			"description": "Camera identifier"
+		},
+		{
+			"key": "feed_id",
+			"value": "1",
+			"type": "string",
+			"description": "BOF Feed identifier (usually Force PNC Code)"
+		},
+		{
+			"key": "source_identifier",
+			"value": "1",
+			"type": "string",
+			"description": "BOF Source identifier for recognition device"
+		},
+		{
+			"key": "camera_identifier",
+			"value": "1",
+			"type": "string",
+			"description": "BOF Camera identifier"
 		}
 	]
 } 
