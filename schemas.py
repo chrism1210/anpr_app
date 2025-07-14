@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
@@ -42,7 +42,8 @@ class HotlistResponse(HotlistBase):
     created_at: datetime
     updated_at: datetime
     
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        orm_mode = True
 
 # ANPR Read Schemas
 class ANPRReadBase(BaseModel):
@@ -66,7 +67,8 @@ class ANPRReadResponse(ANPRReadBase):
     plate_image_path: Optional[str] = None
     context_image_path: Optional[str] = None
     
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        orm_mode = True
 
 # Statistics Schema
 class StatsResponse(BaseModel):
