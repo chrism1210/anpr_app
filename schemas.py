@@ -155,3 +155,48 @@ class StatsResponse(BaseModel):
     total_reads: int
     hotlist_matches: int
     match_rate: float 
+
+# BOF Capture/Input schemas
+class BofSendCaptureRequest(BaseModel):
+    """BOF sendCapture request with full capture details"""
+    vrm: str = Field(..., description="Vehicle Registration Mark (license plate)")
+    feedID: int = Field(..., description="Feed identifier")
+    sourceID: int = Field(..., description="Source identifier")
+    cameraID: int = Field(..., description="Camera identifier")
+    plateImage: Optional[str] = Field(None, description="Base64 encoded plate image")
+    overviewImage: Optional[str] = Field(None, description="Base64 encoded overview image")
+    captureDate: str = Field(..., description="Capture date in ISO format")
+    latitude: Optional[float] = Field(None, description="GPS latitude")
+    longitude: Optional[float] = Field(None, description="GPS longitude")
+    cameraPresetPosition: Optional[int] = Field(None, description="Camera preset position")
+    cameraPan: Optional[str] = Field(None, description="Camera pan position")
+    cameraTilt: Optional[str] = Field(None, description="Camera tilt position")
+    cameraZoom: Optional[str] = Field(None, description="Camera zoom level")
+    confidencePercentage: Optional[int] = Field(None, description="Recognition confidence percentage")
+    motionTowardCamera: Optional[bool] = Field(None, description="Whether motion is toward camera")
+
+class BofSendCompactCaptureRequest(BaseModel):
+    """BOF sendCompactCapture request with pipe-delimited capture string"""
+    capture: str = Field(..., description="Pipe-delimited capture string")
+
+class BofSendCompoundCaptureRequest(BaseModel):
+    """BOF sendCompoundCapture request with multiple captures"""
+    captures: List[str] = Field(..., description="Array of pipe-delimited capture strings")
+
+class BofAddBinaryCaptureDataRequest(BaseModel):
+    """BOF addBinaryCaptureData request for binary image data"""
+    signature: str = Field(..., description="Authentication signature")
+    username: str = Field(..., description="Username")
+    vrm: str = Field(..., description="Vehicle Registration Mark")
+    feedIdentifier: int = Field(..., description="Feed identifier")
+    sourceIdentifier: int = Field(..., description="Source identifier")
+    cameraIdentifier: int = Field(..., description="Camera identifier")
+    captureTime: str = Field(..., description="Capture time in ISO format")
+    binaryImage: str = Field(..., description="Base64 encoded binary image")
+    binaryDataType: str = Field(..., description="Type of binary data (P=plate, C=context)")
+
+class BofCaptureResponse(BaseModel):
+    """Standard BOF capture response"""
+    status: str = Field(..., description="Response status")
+    message: str = Field(..., description="Response message")
+    read_id: Optional[int] = Field(None, description="Created ANPR read ID") 

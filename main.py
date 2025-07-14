@@ -25,7 +25,9 @@ from schemas import (
     BofHotlistRevisions, BofHotlistData, ExternalHotlistRevisions, DeviceSourceCreate,
     DeviceSourceResponse, GetHotlistRepoStatusRequest, GetHotlistStatusRequest,
     SetHotlistStatusRequest, GetHotlistUpdatesRequest, GetHotlistUpdatesRestrictSizeRequest,
-    GetMultipleHotlistUpdatesRequest, GetMultipleHotlistUpdatesRestrictSizeRequest
+    GetMultipleHotlistUpdatesRequest, GetMultipleHotlistUpdatesRestrictSizeRequest,
+    BofSendCaptureRequest, BofSendCompactCaptureRequest, BofSendCompoundCaptureRequest,
+    BofAddBinaryCaptureDataRequest, BofCaptureResponse
 )
 
 # Setup logging
@@ -57,7 +59,21 @@ def get_db():
     finally:
         db.close()
 
-# Helper functions for BOF hotlist synchronization
+# Helper functions for BOF hotlist operations
+def get_or_create_device_source(db: Session, source_id: str) -> DeviceSource:
+    """Get or create a device source"""
+    device = db.query(DeviceSource).filter(DeviceSource.source_id == source_id).first()
+    if not device:
+        device = DeviceSource(
+            source_id=source_id,
+            name=f"Device {source_id}",
+            description=f"Auto-created device for source {source_id}"
+        )
+        db.add(device)
+        db.commit()
+        db.refresh(device)
+    return device
+
 def get_or_create_hotlist_repository(db: Session) -> HotlistRepository:
     """Get or create the global hotlist repository"""
     repo = db.query(HotlistRepository).first()
@@ -74,20 +90,6 @@ def increment_hotlist_repository_revision(db: Session):
     repo.revision += 1
     repo.updated_at = datetime.utcnow()
     db.commit()
-
-def get_or_create_device_source(db: Session, source_id: str) -> DeviceSource:
-    """Get or create a device source"""
-    device = db.query(DeviceSource).filter(DeviceSource.source_id == source_id).first()
-    if not device:
-        device = DeviceSource(
-            source_id=source_id,
-            name=f"Device {source_id}",
-            description=f"Auto-created device for source {source_id}"
-        )
-        db.add(device)
-        db.commit()
-        db.refresh(device)
-    return device
 
 def get_or_create_hotlist_revision(db: Session, hotlist_id: int, device_source_id: int, hotlist_name: str) -> HotlistRevision:
     """Get or create a hotlist revision tracking entry"""
@@ -620,6 +622,320 @@ async def get_multiple_hotlist_updates_restrict_size(
             continue
     
     return results
+
+# BOF Capture/Input Endpoints
+@app.post("/bof/services/InputCaptureWebService/sendCapture", response_model=BofCaptureResponse)
+async def bof_send_capture(
+    request: BofSendCaptureRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    BOF: Send complete capture record to BOF system
+    Creates an ANPR read from the full capture data
+    """
+    try:
+        # Parse capture date
+        capture_time = datetime.fromisoformat(request.captureDate.replace('Z', '+00:00'))
+        
+        # Create ANPR read record
+        anpr_read = ANPRRead(
+            license_plate=request.vrm,
+            camera_id=str(request.cameraID),
+            location=f"Feed:{request.feedID}, Source:{request.sourceID}, Camera:{request.cameraID}",
+            timestamp=capture_time,
+            confidence=request.confidencePercentage or 0,
+            direction=None,
+            speed=None,
+            lane=None
+        )
+        
+        # Check for hotlist match
+        hotlist_match = db.query(Hotlist).filter(Hotlist.license_plate == request.vrm).first()
+        if hotlist_match:
+            anpr_read.hotlist_match = True
+            anpr_read.hotlist_id = hotlist_match.id
+        
+        # Save to database
+        db.add(anpr_read)
+        db.commit()
+        db.refresh(anpr_read)
+        
+        logger.info(f"BOF sendCapture: Created ANPR read for plate {request.vrm}")
+        
+        return BofCaptureResponse(
+            status="success",
+            message=f"Capture processed successfully for plate {request.vrm}",
+            read_id=anpr_read.id
+        )
+        
+    except Exception as e:
+        logger.error(f"BOF sendCapture error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing capture: {str(e)}")
+
+@app.post("/bof/services/InputCaptureWebService/sendCompactCapture", response_model=BofCaptureResponse)
+async def bof_send_compact_capture(
+    request: BofSendCompactCaptureRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    BOF: Send compact (pipe-delimited) capture record
+    Format: signature | username | vrm | feedID | sourceID | cameraID | captureDate | latitude | longitude | cameraPresetPosition | cameraPan | cameraTilt | cameraZoom | confidencePercentage | motionTowardCamera
+    """
+    try:
+        # Parse the pipe-delimited capture string
+        parts = request.capture.split('|')
+        if len(parts) < 7:
+            raise HTTPException(status_code=400, detail="Invalid compact capture format")
+        
+        # Extract required fields
+        signature = parts[0].strip()
+        username = parts[1].strip()
+        vrm = parts[2].strip()
+        feed_id = int(parts[3].strip())
+        source_id = int(parts[4].strip())
+        camera_id = int(parts[5].strip())
+        capture_date = parts[6].strip()
+        
+        # Parse optional fields
+        latitude = float(parts[7].strip()) if len(parts) > 7 and parts[7].strip() else None
+        longitude = float(parts[8].strip()) if len(parts) > 8 and parts[8].strip() else None
+        camera_preset = int(parts[9].strip()) if len(parts) > 9 and parts[9].strip() else None
+        camera_pan = parts[10].strip() if len(parts) > 10 else None
+        camera_tilt = parts[11].strip() if len(parts) > 11 else None
+        camera_zoom = parts[12].strip() if len(parts) > 12 else None
+        confidence = int(parts[13].strip()) if len(parts) > 13 and parts[13].strip() else 0
+        motion_toward_camera = parts[14].strip().lower() == 'true' if len(parts) > 14 else None
+        
+        # Parse capture date
+        capture_time = datetime.fromisoformat(capture_date.replace('Z', '+00:00'))
+        
+        # Create ANPR read record
+        anpr_read = ANPRRead(
+            license_plate=vrm,
+            camera_id=str(camera_id),
+            location=f"Feed:{feed_id}, Source:{source_id}, Camera:{camera_id}",
+            timestamp=capture_time,
+            confidence=confidence,
+            direction=None,
+            speed=None,
+            lane=None
+        )
+        
+        # Check for hotlist match
+        hotlist_match = db.query(Hotlist).filter(Hotlist.license_plate == vrm).first()
+        if hotlist_match:
+            anpr_read.hotlist_match = True
+            anpr_read.hotlist_id = hotlist_match.id
+        
+        # Save to database
+        db.add(anpr_read)
+        db.commit()
+        db.refresh(anpr_read)
+        
+        logger.info(f"BOF sendCompactCapture: Created ANPR read for plate {vrm}")
+        
+        return BofCaptureResponse(
+            status="success",
+            message=f"Compact capture processed successfully for plate {vrm}",
+            read_id=anpr_read.id
+        )
+        
+    except ValueError as e:
+        logger.error(f"BOF sendCompactCapture parsing error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error parsing compact capture: {str(e)}")
+    except Exception as e:
+        logger.error(f"BOF sendCompactCapture error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing compact capture: {str(e)}")
+
+@app.post("/bof/services/InputCaptureWebService/sendCompoundCapture", response_model=BofCaptureResponse)
+async def bof_send_compound_capture(
+    request: BofSendCompoundCaptureRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    BOF: Send multiple compact capture records in a single request
+    Maximum 50 captures per request
+    """
+    try:
+        if len(request.captures) > 50:
+            raise HTTPException(status_code=400, detail="Maximum 50 captures per request")
+        
+        created_reads = []
+        
+        for capture_string in request.captures:
+            # Parse the pipe-delimited capture string
+            parts = capture_string.split('|')
+            if len(parts) < 7:
+                logger.warning(f"Skipping invalid compact capture format: {capture_string}")
+                continue
+            
+            # Extract required fields
+            signature = parts[0].strip()
+            username = parts[1].strip()
+            vrm = parts[2].strip()
+            feed_id = int(parts[3].strip())
+            source_id = int(parts[4].strip())
+            camera_id = int(parts[5].strip())
+            capture_date = parts[6].strip()
+            
+            # Parse optional fields
+            confidence = int(parts[13].strip()) if len(parts) > 13 and parts[13].strip() else 0
+            
+            # Parse capture date
+            capture_time = datetime.fromisoformat(capture_date.replace('Z', '+00:00'))
+            
+            # Create ANPR read record
+            anpr_read = ANPRRead(
+                license_plate=vrm,
+                camera_id=str(camera_id),
+                location=f"Feed:{feed_id}, Source:{source_id}, Camera:{camera_id}",
+                timestamp=capture_time,
+                confidence=confidence,
+                direction=None,
+                speed=None,
+                lane=None
+            )
+            
+            # Check for hotlist match
+            hotlist_match = db.query(Hotlist).filter(Hotlist.license_plate == vrm).first()
+            if hotlist_match:
+                anpr_read.hotlist_match = True
+                anpr_read.hotlist_id = hotlist_match.id
+            
+            # Save to database
+            db.add(anpr_read)
+            created_reads.append(anpr_read)
+        
+        # Commit all at once
+        db.commit()
+        
+        logger.info(f"BOF sendCompoundCapture: Created {len(created_reads)} ANPR reads")
+        
+        return BofCaptureResponse(
+            status="success",
+            message=f"Compound capture processed successfully. Created {len(created_reads)} reads",
+            read_id=None
+        )
+        
+    except Exception as e:
+        logger.error(f"BOF sendCompoundCapture error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing compound capture: {str(e)}")
+
+@app.post("/bof/services/InputBinaryDataWebService/addBinaryCaptureData", response_model=BofCaptureResponse)
+async def bof_add_binary_capture_data(
+    request: BofAddBinaryCaptureDataRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    BOF: Add binary image data to a previously sent capture record
+    Supports plate (P) and context (C) image types
+    """
+    try:
+        # Parse capture time
+        capture_time = datetime.fromisoformat(request.captureTime.replace('Z', '+00:00'))
+        
+        # Find existing ANPR read that matches this capture
+        anpr_read = db.query(ANPRRead).filter(
+            ANPRRead.license_plate == request.vrm,
+            ANPRRead.camera_id == str(request.cameraIdentifier),
+            ANPRRead.timestamp == capture_time
+        ).first()
+        
+        if not anpr_read:
+            # Create new ANPR read if it doesn't exist
+            anpr_read = ANPRRead(
+                license_plate=request.vrm,
+                camera_id=str(request.cameraIdentifier),
+                location=f"Feed:{request.feedIdentifier}, Source:{request.sourceIdentifier}, Camera:{request.cameraIdentifier}",
+                timestamp=capture_time,
+                confidence=0,
+                direction=None,
+                speed=None,
+                lane=None
+            )
+            
+            # Check for hotlist match
+            hotlist_match = db.query(Hotlist).filter(Hotlist.license_plate == request.vrm).first()
+            if hotlist_match:
+                anpr_read.hotlist_match = True
+                anpr_read.hotlist_id = hotlist_match.id
+            
+            db.add(anpr_read)
+            db.commit()
+            db.refresh(anpr_read)
+        
+        # Save binary image data to filesystem
+        if request.binaryImage:
+            try:
+                # Decode base64 image
+                image_data = base64.b64decode(request.binaryImage)
+                
+                # Generate filename
+                image_extension = "jpg"  # Default to JPG
+                if request.binaryDataType == "P":
+                    filename = f"plate_{uuid.uuid4()}.{image_extension}"
+                    filepath = UPLOAD_DIR / filename
+                    
+                    # Save image
+                    with open(filepath, "wb") as f:
+                        f.write(image_data)
+                    
+                    # Update ANPR read with image path
+                    anpr_read.plate_image_path = str(filepath)
+                    
+                elif request.binaryDataType == "C":
+                    filename = f"context_{uuid.uuid4()}.{image_extension}"
+                    filepath = UPLOAD_DIR / filename
+                    
+                    # Save image
+                    with open(filepath, "wb") as f:
+                        f.write(image_data)
+                    
+                    # Update ANPR read with context image path
+                    anpr_read.context_image_path = str(filepath)
+                
+                db.commit()
+                
+                logger.info(f"BOF addBinaryCaptureData: Saved {request.binaryDataType} image for plate {request.vrm}")
+                
+            except Exception as e:
+                logger.error(f"Error saving binary image: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Error saving binary image: {str(e)}")
+        
+        return BofCaptureResponse(
+            status="success",
+            message=f"Binary capture data processed successfully for plate {request.vrm}",
+            read_id=anpr_read.id
+        )
+        
+    except Exception as e:
+        logger.error(f"BOF addBinaryCaptureData error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing binary capture data: {str(e)}")
+
+# Helper function to parse compact capture strings
+def parse_compact_capture(capture_string: str) -> dict:
+    """Parse a pipe-delimited compact capture string into a dictionary"""
+    parts = capture_string.split('|')
+    if len(parts) < 7:
+        raise ValueError("Invalid compact capture format")
+    
+    return {
+        "signature": parts[0].strip(),
+        "username": parts[1].strip(),
+        "vrm": parts[2].strip(),
+        "feed_id": int(parts[3].strip()),
+        "source_id": int(parts[4].strip()),
+        "camera_id": int(parts[5].strip()),
+        "capture_date": parts[6].strip(),
+        "latitude": float(parts[7].strip()) if len(parts) > 7 and parts[7].strip() else None,
+        "longitude": float(parts[8].strip()) if len(parts) > 8 and parts[8].strip() else None,
+        "camera_preset": int(parts[9].strip()) if len(parts) > 9 and parts[9].strip() else None,
+        "camera_pan": parts[10].strip() if len(parts) > 10 else None,
+        "camera_tilt": parts[11].strip() if len(parts) > 11 else None,
+        "camera_zoom": parts[12].strip() if len(parts) > 12 else None,
+        "confidence": int(parts[13].strip()) if len(parts) > 13 and parts[13].strip() else 0,
+        "motion_toward_camera": parts[14].strip().lower() == 'true' if len(parts) > 14 else None
+    }
 
 # Sample connectivity check endpoint
 @app.get("/anpr/connectivity")
