@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 
 # Hotlist Group Schemas
@@ -13,13 +13,54 @@ class HotlistGroupBase(BaseModel):
     expiry_date: Optional[datetime] = Field(None, description="When this hotlist expires")
 
 class VehicleBase(BaseModel):
-    license_plate: str = Field(..., max_length=20, description="Vehicle license plate number")
-    vehicle_make: Optional[str] = Field(None, max_length=50)
-    vehicle_model: Optional[str] = Field(None, max_length=50)
-    vehicle_color: Optional[str] = Field(None, max_length=30)
-    vehicle_year: Optional[int] = Field(None, ge=1900, le=2030)
-    owner_name: Optional[str] = Field(None, max_length=200)
-    notes: Optional[str] = None
+    # Basic vehicle identification (mandatory)
+    license_plate: str = Field(..., max_length=20, description="Vehicle Registration Mark (VRM)")
+    
+    # Basic vehicle information
+    vehicle_make: Optional[str] = Field(None, max_length=50, description="Vehicle manufacturer")
+    vehicle_model: Optional[str] = Field(None, max_length=50, description="Vehicle model")
+    vehicle_color: Optional[str] = Field(None, max_length=30, description="Vehicle colour")
+    
+    # Extended ANPR-compliant vehicle details
+    vin_number: Optional[str] = Field(None, max_length=17, description="Vehicle Identification Number")
+    engine_number: Optional[str] = Field(None, max_length=50, description="Engine number")
+    engine_capacity: Optional[int] = Field(None, ge=0, description="Engine capacity in cc")
+    fuel_type: Optional[str] = Field(None, max_length=20, description="Fuel type (Petrol, Diesel, Electric, Hybrid)")
+    body_type: Optional[str] = Field(None, max_length=30, description="Body type (Saloon, Hatchback, Estate, etc.)")
+    
+    # Registration information
+    date_of_first_registration: Optional[date] = Field(None, description="Date of first registration")
+    date_of_first_uk_registration: Optional[date] = Field(None, description="Date of first UK registration")
+    vehicle_manufactured_date: Optional[date] = Field(None, description="Vehicle manufacture date")
+    
+    # ANPR-specific operational fields
+    warning_markers: Optional[str] = Field(None, max_length=100, description="Warning markers for the vehicle")
+    nim_code: Optional[str] = Field(None, max_length=20, description="NIM (5x5x5) Code")
+    force_area: Optional[str] = Field(None, max_length=50, description="Police force/area identifier")
+    weed_date: Optional[date] = Field(None, description="Date when record should be reviewed/removed")
+    pnc_id: Optional[str] = Field(None, max_length=50, description="Police National Computer ID")
+    gpms_marking: Optional[str] = Field("Unclassified", max_length=20, description="GPMS classification")
+    cad_information: Optional[str] = Field(None, max_length=200, description="Command and Control information")
+    
+    # Additional operational data
+    theft_marker: Optional[bool] = Field(False, description="Vehicle stolen marker")
+    scrap_marker: Optional[bool] = Field(False, description="Vehicle scrapped marker")
+    export_marker: Optional[bool] = Field(False, description="Vehicle exported marker")
+    
+    # Extended description and intelligence
+    intelligence_information: Optional[str] = Field(None, description="Additional intelligence information")
+    operational_instructions: Optional[str] = Field(None, description="Specific operational instructions")
+    vehicle_features: Optional[str] = Field(None, max_length=200, description="Distinctive vehicle features")
+    
+    # Audit and tracking
+    source_reference: Optional[str] = Field(None, max_length=100, description="Source of the intelligence")
+    authorizing_officer: Optional[str] = Field(None, max_length=100, description="Officer authorizing the entry")
+    review_date: Optional[date] = Field(None, description="Date for next review")
+    
+    # Legacy fields for backward compatibility
+    vehicle_year: Optional[int] = Field(None, ge=1900, le=2030, description="Vehicle year (deprecated, use date_of_first_registration)")
+    owner_name: Optional[str] = Field(None, max_length=200, description="Vehicle owner name (deprecated)")
+    notes: Optional[str] = Field(None, description="Additional notes (deprecated, use intelligence_information)")
 
 class VehicleCreate(VehicleBase):
     pass

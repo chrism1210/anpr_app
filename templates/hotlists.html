@@ -297,57 +297,323 @@ function addVehicleRow() {
     vehicleRow.id = `vehicle-${vehicleId}`;
     vehicleRow.innerHTML = `
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <h6 class="card-title mb-0">Vehicle ${vehicleId + 1}</h6>
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVehicleRow(${vehicleId})">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label for="licensePlate-${vehicleId}" class="form-label">License Plate *</label>
-                        <input type="text" class="form-control" id="licensePlate-${vehicleId}" name="licensePlate" required>
+            
+            <!-- Tabbed Interface for ANPR-compliant fields -->
+            <ul class="nav nav-tabs" id="vehicleTabs-${vehicleId}" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab-${vehicleId}" data-bs-toggle="tab" data-bs-target="#basic-${vehicleId}" type="button" role="tab">
+                        Basic Details
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="technical-tab-${vehicleId}" data-bs-toggle="tab" data-bs-target="#technical-${vehicleId}" type="button" role="tab">
+                        Technical Details
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="operational-tab-${vehicleId}" data-bs-toggle="tab" data-bs-target="#operational-${vehicleId}" type="button" role="tab">
+                        ANPR Operational
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="intelligence-tab-${vehicleId}" data-bs-toggle="tab" data-bs-target="#intelligence-${vehicleId}" type="button" role="tab">
+                        Intelligence
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content mt-3" id="vehicleTabContent-${vehicleId}">
+                <!-- Basic Details Tab -->
+                <div class="tab-pane fade show active" id="basic-${vehicleId}" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="licensePlate-${vehicleId}" class="form-label">License Plate (VRM) *</label>
+                                <input type="text" class="form-control" id="licensePlate-${vehicleId}" name="licensePlate" required 
+                                       placeholder="e.g. AB12 CDE">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="vehicleMake-${vehicleId}" class="form-label">Make</label>
+                                <input type="text" class="form-control" id="vehicleMake-${vehicleId}" name="vehicleMake"
+                                       placeholder="e.g. Ford, BMW, Toyota">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="vehicleModel-${vehicleId}" class="form-label">Model</label>
+                                <input type="text" class="form-control" id="vehicleModel-${vehicleId}" name="vehicleModel"
+                                       placeholder="e.g. Focus, X5, Corolla">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="vehicleColor-${vehicleId}" class="form-label">Color</label>
+                                <input type="text" class="form-control" id="vehicleColor-${vehicleId}" name="vehicleColor"
+                                       placeholder="e.g. Blue, Red, Silver">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="bodyType-${vehicleId}" class="form-label">Body Type</label>
+                                <select class="form-select" id="bodyType-${vehicleId}" name="bodyType">
+                                    <option value="">Select Body Type</option>
+                                    <option value="Saloon">Saloon</option>
+                                    <option value="Hatchback">Hatchback</option>
+                                    <option value="Estate">Estate</option>
+                                    <option value="SUV">SUV</option>
+                                    <option value="Coupe">Coupe</option>
+                                    <option value="Convertible">Convertible</option>
+                                    <option value="MPV">MPV</option>
+                                    <option value="Van">Van</option>
+                                    <option value="Truck">Truck</option>
+                                    <option value="Motorcycle">Motorcycle</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="fuelType-${vehicleId}" class="form-label">Fuel Type</label>
+                                <select class="form-select" id="fuelType-${vehicleId}" name="fuelType">
+                                    <option value="">Select Fuel Type</option>
+                                    <option value="Petrol">Petrol</option>
+                                    <option value="Diesel">Diesel</option>
+                                    <option value="Electric">Electric</option>
+                                    <option value="Hybrid">Hybrid</option>
+                                    <option value="LPG">LPG</option>
+                                    <option value="CNG">CNG</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="vehicleFeatures-${vehicleId}" class="form-label">Distinctive Features</label>
+                                <input type="text" class="form-control" id="vehicleFeatures-${vehicleId}" name="vehicleFeatures"
+                                       placeholder="e.g. Roof rack, tinted windows">
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label for="vehicleMake-${vehicleId}" class="form-label">Make</label>
-                        <input type="text" class="form-control" id="vehicleMake-${vehicleId}" name="vehicleMake">
+                
+                <!-- Technical Details Tab -->
+                <div class="tab-pane fade" id="technical-${vehicleId}" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="vinNumber-${vehicleId}" class="form-label">VIN Number</label>
+                                <input type="text" class="form-control" id="vinNumber-${vehicleId}" name="vinNumber" 
+                                       maxlength="17" placeholder="17-character VIN">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="engineNumber-${vehicleId}" class="form-label">Engine Number</label>
+                                <input type="text" class="form-control" id="engineNumber-${vehicleId}" name="engineNumber">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="engineCapacity-${vehicleId}" class="form-label">Engine Capacity (cc)</label>
+                                <input type="number" class="form-control" id="engineCapacity-${vehicleId}" name="engineCapacity" 
+                                       min="0" placeholder="e.g. 1600">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="dateOfFirstRegistration-${vehicleId}" class="form-label">Date of First Registration</label>
+                                <input type="date" class="form-control" id="dateOfFirstRegistration-${vehicleId}" name="dateOfFirstRegistration">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="dateOfFirstUkRegistration-${vehicleId}" class="form-label">Date of First UK Registration</label>
+                                <input type="date" class="form-control" id="dateOfFirstUkRegistration-${vehicleId}" name="dateOfFirstUkRegistration">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="vehicleManufacturedDate-${vehicleId}" class="form-label">Manufacture Date</label>
+                                <input type="date" class="form-control" id="vehicleManufacturedDate-${vehicleId}" name="vehicleManufacturedDate">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="theftMarker-${vehicleId}" name="theftMarker">
+                                        <label class="form-check-label" for="theftMarker-${vehicleId}">
+                                            Theft Marker
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="scrapMarker-${vehicleId}" name="scrapMarker">
+                                        <label class="form-check-label" for="scrapMarker-${vehicleId}">
+                                            Scrap Marker
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="exportMarker-${vehicleId}" name="exportMarker">
+                                        <label class="form-check-label" for="exportMarker-${vehicleId}">
+                                            Export Marker
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label for="vehicleModel-${vehicleId}" class="form-label">Model</label>
-                        <input type="text" class="form-control" id="vehicleModel-${vehicleId}" name="vehicleModel">
+                
+                <!-- ANPR Operational Tab -->
+                <div class="tab-pane fade" id="operational-${vehicleId}" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="warningMarkers-${vehicleId}" class="form-label">Warning Markers</label>
+                                <input type="text" class="form-control" id="warningMarkers-${vehicleId}" name="warningMarkers"
+                                       placeholder="e.g. FIREARMS, VIOLENT">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="nimCode-${vehicleId}" class="form-label">NIM (5x5x5) Code</label>
+                                <input type="text" class="form-control" id="nimCode-${vehicleId}" name="nimCode"
+                                       placeholder="e.g. 123/45/67">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="forceArea-${vehicleId}" class="form-label">Force/Area</label>
+                                <input type="text" class="form-control" id="forceArea-${vehicleId}" name="forceArea"
+                                       placeholder="e.g. Met Police, Thames Valley">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="weedDate-${vehicleId}" class="form-label">Weed Date</label>
+                                <input type="date" class="form-control" id="weedDate-${vehicleId}" name="weedDate">
+                                <div class="form-text">Date when record should be reviewed/removed</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="pncId-${vehicleId}" class="form-label">PNC ID</label>
+                                <input type="text" class="form-control" id="pncId-${vehicleId}" name="pncId"
+                                       placeholder="Police National Computer ID">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="gpmsMarking-${vehicleId}" class="form-label">GPMS Marking</label>
+                                <select class="form-select" id="gpmsMarking-${vehicleId}" name="gpmsMarking">
+                                    <option value="Unclassified">Unclassified</option>
+                                    <option value="Official">Official</option>
+                                    <option value="Official-Sensitive">Official-Sensitive</option>
+                                    <option value="Secret">Secret</option>
+                                    <option value="Top Secret">Top Secret</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cadInformation-${vehicleId}" class="form-label">CAD Information</label>
+                                <input type="text" class="form-control" id="cadInformation-${vehicleId}" name="cadInformation"
+                                       placeholder="Command and Control information">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reviewDate-${vehicleId}" class="form-label">Next Review Date</label>
+                                <input type="date" class="form-control" id="reviewDate-${vehicleId}" name="reviewDate">
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label for="vehicleColor-${vehicleId}" class="form-label">Color</label>
-                        <input type="text" class="form-control" id="vehicleColor-${vehicleId}" name="vehicleColor">
+                
+                <!-- Intelligence Tab -->
+                <div class="tab-pane fade" id="intelligence-${vehicleId}" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sourceReference-${vehicleId}" class="form-label">Source Reference</label>
+                                <input type="text" class="form-control" id="sourceReference-${vehicleId}" name="sourceReference"
+                                       placeholder="Intelligence source reference">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="authorizingOfficer-${vehicleId}" class="form-label">Authorizing Officer</label>
+                                <input type="text" class="form-control" id="authorizingOfficer-${vehicleId}" name="authorizingOfficer"
+                                       placeholder="Officer authorizing entry">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label for="vehicleYear-${vehicleId}" class="form-label">Year</label>
-                        <input type="number" class="form-control" id="vehicleYear-${vehicleId}" name="vehicleYear" min="1900" max="2030">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="intelligenceInformation-${vehicleId}" class="form-label">Intelligence Information</label>
+                                <textarea class="form-control" id="intelligenceInformation-${vehicleId}" name="intelligenceInformation" 
+                                         rows="3" placeholder="Detailed intelligence information about this vehicle"></textarea>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label for="ownerName-${vehicleId}" class="form-label">Owner Name</label>
-                        <input type="text" class="form-control" id="ownerName-${vehicleId}" name="ownerName">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="operationalInstructions-${vehicleId}" class="form-label">Operational Instructions</label>
+                                <textarea class="form-control" id="operationalInstructions-${vehicleId}" name="operationalInstructions" 
+                                         rows="3" placeholder="Specific operational instructions for officers"></textarea>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <div class="mb-3">
-                        <label for="notes-${vehicleId}" class="form-label">Notes</label>
-                        <textarea class="form-control" id="notes-${vehicleId}" name="notes" rows="2"></textarea>
+                    
+                    <!-- Legacy fields (marked as deprecated) -->
+                    <hr>
+                    <h6 class="text-muted">Legacy Fields (Deprecated)</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="vehicleYear-${vehicleId}" class="form-label">Vehicle Year <small class="text-muted">(deprecated)</small></label>
+                                <input type="number" class="form-control" id="vehicleYear-${vehicleId}" name="vehicleYear" 
+                                       min="1900" max="2030" placeholder="Use registration date instead">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ownerName-${vehicleId}" class="form-label">Owner Name <small class="text-muted">(deprecated)</small></label>
+                                <input type="text" class="form-control" id="ownerName-${vehicleId}" name="ownerName"
+                                       placeholder="Use intelligence information instead">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="notes-${vehicleId}" class="form-label">Notes <small class="text-muted">(deprecated)</small></label>
+                                <textarea class="form-control" id="notes-${vehicleId}" name="notes" rows="2"
+                                         placeholder="Use intelligence information or operational instructions instead"></textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -484,15 +750,56 @@ async function saveHotlistGroup() {
             
             // Only add vehicle if license plate is provided
             if (licensePlate.trim()) {
-                formData.vehicles.push({
+                const vehicleData = {
+                    // Basic vehicle identification
                     license_plate: licensePlate,
                     vehicle_make: document.getElementById(`vehicleMake-${vehicleId}`).value || null,
                     vehicle_model: document.getElementById(`vehicleModel-${vehicleId}`).value || null,
                     vehicle_color: document.getElementById(`vehicleColor-${vehicleId}`).value || null,
-                    vehicle_year: document.getElementById(`vehicleYear-${vehicleId}`).value || null,
+                    
+                    // Extended ANPR-compliant vehicle details
+                    vin_number: document.getElementById(`vinNumber-${vehicleId}`).value || null,
+                    engine_number: document.getElementById(`engineNumber-${vehicleId}`).value || null,
+                    engine_capacity: document.getElementById(`engineCapacity-${vehicleId}`).value ? parseInt(document.getElementById(`engineCapacity-${vehicleId}`).value) : null,
+                    fuel_type: document.getElementById(`fuelType-${vehicleId}`).value || null,
+                    body_type: document.getElementById(`bodyType-${vehicleId}`).value || null,
+                    
+                    // Registration information
+                    date_of_first_registration: document.getElementById(`dateOfFirstRegistration-${vehicleId}`).value || null,
+                    date_of_first_uk_registration: document.getElementById(`dateOfFirstUkRegistration-${vehicleId}`).value || null,
+                    vehicle_manufactured_date: document.getElementById(`vehicleManufacturedDate-${vehicleId}`).value || null,
+                    
+                    // ANPR-specific operational fields
+                    warning_markers: document.getElementById(`warningMarkers-${vehicleId}`).value || null,
+                    nim_code: document.getElementById(`nimCode-${vehicleId}`).value || null,
+                    force_area: document.getElementById(`forceArea-${vehicleId}`).value || null,
+                    weed_date: document.getElementById(`weedDate-${vehicleId}`).value || null,
+                    pnc_id: document.getElementById(`pncId-${vehicleId}`).value || null,
+                    gpms_marking: document.getElementById(`gpmsMarking-${vehicleId}`).value || "Unclassified",
+                    cad_information: document.getElementById(`cadInformation-${vehicleId}`).value || null,
+                    
+                    // Additional operational data
+                    theft_marker: document.getElementById(`theftMarker-${vehicleId}`).checked || false,
+                    scrap_marker: document.getElementById(`scrapMarker-${vehicleId}`).checked || false,
+                    export_marker: document.getElementById(`exportMarker-${vehicleId}`).checked || false,
+                    
+                    // Extended description and intelligence
+                    intelligence_information: document.getElementById(`intelligenceInformation-${vehicleId}`).value || null,
+                    operational_instructions: document.getElementById(`operationalInstructions-${vehicleId}`).value || null,
+                    vehicle_features: document.getElementById(`vehicleFeatures-${vehicleId}`).value || null,
+                    
+                    // Audit and tracking
+                    source_reference: document.getElementById(`sourceReference-${vehicleId}`).value || null,
+                    authorizing_officer: document.getElementById(`authorizingOfficer-${vehicleId}`).value || null,
+                    review_date: document.getElementById(`reviewDate-${vehicleId}`).value || null,
+                    
+                    // Legacy fields for backward compatibility
+                    vehicle_year: document.getElementById(`vehicleYear-${vehicleId}`).value ? parseInt(document.getElementById(`vehicleYear-${vehicleId}`).value) : null,
                     owner_name: document.getElementById(`ownerName-${vehicleId}`).value || null,
                     notes: document.getElementById(`notes-${vehicleId}`).value || null
-                });
+                };
+                
+                formData.vehicles.push(vehicleData);
             }
         });
         

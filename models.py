@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, BigInteger
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, BigInteger, Date
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -28,25 +28,57 @@ class Hotlist(Base):
     __tablename__ = "hotlists"
     
     id = Column(Integer, primary_key=True, index=True)
-    hotlist_group_id = Column(Integer, ForeignKey("hotlist_groups.id"), nullable=False)
-    license_plate = Column(String(20), index=True, nullable=False)  # Removed unique constraint
+    license_plate = Column(String, index=True, nullable=False)  # VRM
     
-    # Vehicle details
-    vehicle_make = Column(String(50), nullable=True)
-    vehicle_model = Column(String(50), nullable=True)
-    vehicle_color = Column(String(30), nullable=True)
-    vehicle_year = Column(Integer, nullable=True)
-    owner_name = Column(String(200), nullable=True)
-    notes = Column(Text, nullable=True)
+    # Basic vehicle information
+    vehicle_make = Column(String)
+    vehicle_model = Column(String) 
+    vehicle_color = Column(String)
     
+    # Extended ANPR-compliant vehicle details
+    vin_number = Column(String)  # Vehicle Identification Number
+    engine_number = Column(String)
+    engine_capacity = Column(Integer)  # Engine capacity in cc
+    fuel_type = Column(String)  # Petrol, Diesel, Electric, Hybrid, etc.
+    body_type = Column(String)  # Saloon, Hatchback, Estate, etc.
+    
+    # Registration information
+    date_of_first_registration = Column(Date)
+    date_of_first_uk_registration = Column(Date) 
+    vehicle_manufactured_date = Column(Date)
+    
+    # ANPR-specific operational fields
+    warning_markers = Column(String)  # Warning markers for the vehicle
+    nim_code = Column(String)  # NIM (5x5x5) Code
+    force_area = Column(String)  # Police force/area identifier
+    weed_date = Column(Date)  # Date when record should be reviewed/removed
+    pnc_id = Column(String)  # Police National Computer ID
+    gpms_marking = Column(String, default="Unclassified")  # GPMS classification
+    cad_information = Column(String)  # Command and Control information
+    
+    # Additional operational data
+    theft_marker = Column(Boolean, default=False)  # Vehicle stolen marker
+    scrap_marker = Column(Boolean, default=False)  # Vehicle scrapped marker
+    export_marker = Column(Boolean, default=False)  # Vehicle exported marker
+    
+    # Extended description and intelligence
+    intelligence_information = Column(Text)  # Additional intelligence
+    operational_instructions = Column(Text)  # Specific operational instructions
+    vehicle_features = Column(String)  # Distinctive features
+    
+    # Audit and tracking
+    source_reference = Column(String)  # Source of the intelligence
+    authorizing_officer = Column(String)  # Officer authorizing the entry
+    review_date = Column(Date)  # Date for next review
+    
+    # Existing fields
+    hotlist_group_id = Column(Integer, ForeignKey("hotlist_groups.id"))
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    is_active = Column(Boolean, default=True)
+    revision = Column(BigInteger, default=1)
     
-    # BOF-specific fields for revision tracking
-    revision = Column(BigInteger, default=1)  # Revision number for this hotlist entry
-    
-    # Relationships
+    # Relationship
     hotlist_group = relationship("HotlistGroup", back_populates="vehicles")
     anpr_reads = relationship("ANPRRead", back_populates="hotlist")
 

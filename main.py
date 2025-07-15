@@ -121,7 +121,7 @@ def get_or_create_hotlist_revision(db: Session, hotlist_group_id: int, device_so
     return revision
 
 def generate_hotlist_csv_data(hotlists: List[Hotlist]) -> str:
-    """Generate CSV data for hotlists in BOF 16-column format"""
+    """Generate CSV data for hotlists in BOF 16-column format compliant with UK ANPR Regulation 109"""
     output = io.StringIO()
     writer = csv.writer(output)
     
@@ -129,24 +129,24 @@ def generate_hotlist_csv_data(hotlists: List[Hotlist]) -> str:
         # Get group-level information from the hotlist group
         group = hotlist.hotlist_group
         
-        # BOF 16-column format
+        # BOF 16-column format with enhanced ANPR-compliant data
         row = [
-            hotlist.license_plate,           # VRM
-            hotlist.vehicle_make or "",      # Vehicle Make
-            hotlist.vehicle_model or "",     # Vehicle Model
-            hotlist.vehicle_color or "",     # Vehicle Colour
-            "STOP" if group.priority == "high" else "SILENT",  # Action (from group)
-            "",                              # Warning Markers
-            group.category.upper(),          # Reason (from group)
-            "",                              # NIM (5x5x5) Code
-            group.description,               # Information/Action (from group)
-            "",                              # Force & Area
-            "",                              # Weed Date
-            "",                              # PNC ID
-            "Unclassified",                  # GPMS Marking
-            "",                              # CAD Information
-            "",                              # Spare 1
-            ""                               # Spare 2
+            hotlist.license_plate,                                              # VRM
+            hotlist.vehicle_make or "",                                        # Vehicle Make
+            hotlist.vehicle_model or "",                                       # Vehicle Model  
+            hotlist.vehicle_color or "",                                       # Vehicle Colour
+            "STOP" if group.priority == "high" else "SILENT",                 # Action (from group priority)
+            hotlist.warning_markers or "",                                     # Warning Markers
+            group.category.upper() if group.category else "",                 # Reason (from group category)
+            hotlist.nim_code or "",                                           # NIM (5x5x5) Code
+            hotlist.intelligence_information or group.description or "",       # Information/Action
+            hotlist.force_area or "",                                         # Force & Area
+            hotlist.weed_date.strftime("%d/%m/%Y") if hotlist.weed_date else "", # Weed Date
+            hotlist.pnc_id or "",                                             # PNC ID
+            hotlist.gpms_marking or "Unclassified",                          # GPMS Marking
+            hotlist.cad_information or "",                                    # CAD Information
+            hotlist.operational_instructions or "",                           # Operational Instructions (Spare 1)
+            hotlist.source_reference or ""                                    # Source Reference (Spare 2)
         ]
         writer.writerow(row)
     
