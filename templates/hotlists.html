@@ -10,10 +10,16 @@
                 <i class="fas fa-list me-2"></i>
                 Vehicle Hotlists
             </h1>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hotlistGroupModal">
-                <i class="fas fa-plus me-2"></i>
-                Add Hotlist Group
-            </button>
+            <div>
+                <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#csvUploadModal">
+                    <i class="fas fa-upload me-2"></i>
+                    Import CSV
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hotlistGroupModal">
+                    <i class="fas fa-plus me-2"></i>
+                    Add Hotlist Group
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -75,6 +81,106 @@
     </div>
 </div>
 
+<!-- CSV Upload Modal -->
+<div class="modal fade" id="csvUploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Vehicles from CSV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="csvHotlistSelect" class="form-label">Select Target Hotlist Group *</label>
+                    <select class="form-select" id="csvHotlistSelect" required>
+                        <option value="">Select a hotlist group...</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="csvFile" class="form-label">Choose CSV File *</label>
+                    <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                    <div class="form-text">
+                        Supported formats: CSV files with or without headers. 
+                        <a href="#" onclick="showCsvFormat()">View expected format</a>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="csvHasHeaders" checked>
+                        <label class="form-check-label" for="csvHasHeaders">
+                            File has headers (first row contains column names)
+                        </label>
+                    </div>
+                </div>
+
+                <div id="csvPreview" class="d-none">
+                    <h6>Preview (first 5 rows):</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered" id="csvPreviewTable">
+                        </table>
+                    </div>
+                    
+                    <div id="columnMapping" class="mt-3">
+                        <h6>Column Mapping:</h6>
+                        <div class="row" id="columnMappingContainer">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="importCsvBtn" disabled>Import Vehicles</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSV Format Help Modal -->
+<div class="modal fade" id="csvFormatModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">CSV Format Guide</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Supported Column Headers:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Column Name</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>license_plate</td><td class="text-danger">Yes</td><td>Vehicle registration</td><td>AB12 CDE</td></tr>
+                            <tr><td>vehicle_make</td><td>No</td><td>Vehicle manufacturer</td><td>Ford</td></tr>
+                            <tr><td>vehicle_model</td><td>No</td><td>Vehicle model</td><td>Focus</td></tr>
+                            <tr><td>vehicle_color</td><td>No</td><td>Vehicle color</td><td>Blue</td></tr>
+                            <tr><td>vin_number</td><td>No</td><td>Vehicle identification number</td><td>1HGBH41JXMN109186</td></tr>
+                            <tr><td>fuel_type</td><td>No</td><td>Fuel type</td><td>Petrol</td></tr>
+                            <tr><td>body_type</td><td>No</td><td>Body type</td><td>Saloon</td></tr>
+                            <tr><td>warning_markers</td><td>No</td><td>Warning markers</td><td>FIREARMS</td></tr>
+                            <tr><td>intelligence_information</td><td>No</td><td>Intelligence notes</td><td>Seen at incident</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h6 class="mt-3">Example CSV:</h6>
+                <pre class="bg-light p-3"><code>license_plate,vehicle_make,vehicle_model,vehicle_color,warning_markers
+AB12 CDE,Ford,Focus,Blue,FIREARMS
+XY98 ZAB,BMW,X5,Black,
+CD34 EFG,Toyota,Corolla,Red,VIOLENT</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Add/Edit Hotlist Group Modal -->
 <div class="modal fade" id="hotlistGroupModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
@@ -132,28 +238,49 @@
                         <textarea class="form-control" id="description" rows="3" required></textarea>
                     </div>
                     
-
-                    
                     <hr>
                     
-                    <!-- Vehicles Section -->
+                    <!-- Streamlined Vehicle Grid Entry -->
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6>Vehicles in this Hotlist</h6>
-                        <button type="button" class="btn btn-sm btn-success" id="addVehicleBtn">
-                            <i class="fas fa-plus me-1"></i>
-                            Add Vehicle
-                        </button>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="toggleAdvancedFields">
+                                <i class="fas fa-cog me-1"></i>
+                                Advanced Fields
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" id="addVehicleBtn">
+                                <i class="fas fa-plus me-1"></i>
+                                Add Vehicle
+                            </button>
+                        </div>
                     </div>
                     
-                    <div id="vehiclesContainer">
-                        <!-- Vehicle entries will be added here -->
+                    <!-- Vehicle Grid Table -->
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered" id="vehicleGrid">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 120px;">License Plate *</th>
+                                    <th style="width: 100px;">Make</th>
+                                    <th style="width: 100px;">Model</th>
+                                    <th style="width: 80px;">Color</th>
+                                    <th style="width: 100px;">Body Type</th>
+                                    <th style="width: 80px;">Fuel Type</th>
+                                    <!-- Advanced fields (initially hidden) -->
+                                    <th class="advanced-field d-none" style="width: 120px;">VIN</th>
+                                    <th class="advanced-field d-none" style="width: 100px;">Warning Markers</th>
+                                    <th class="advanced-field d-none" style="width: 150px;">Intelligence Info</th>
+                                    <th class="advanced-field d-none" style="width: 80px;">Force Area</th>
+                                    <th style="width: 50px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vehicleGridBody">
+                                <!-- Vehicle rows will be added here -->
+                            </tbody>
+                        </table>
                     </div>
                     
-
-                    
-
-                    
-                    <div class="row">
+                    <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="expiryDate" class="form-label">Expiry Date</label>
@@ -184,9 +311,11 @@
 <script>
 let currentHotlistGroupId = null;
 let vehicleCounter = 0;
+let showAdvancedFields = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadHotlistGroups();
+    loadHotlistGroupsForCsv();
     
     // Search functionality
     document.getElementById('searchBtn').addEventListener('click', loadHotlistGroups);
@@ -205,6 +334,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add vehicle button
     document.getElementById('addVehicleBtn').addEventListener('click', addVehicleRow);
+    
+    // Toggle advanced fields
+    document.getElementById('toggleAdvancedFields').addEventListener('click', toggleAdvancedFields);
+    
+    // CSV functionality
+    document.getElementById('csvFile').addEventListener('change', handleCsvFileSelect);
+    document.getElementById('importCsvBtn').addEventListener('click', importCsvData);
     
     // Reset form when modal closes
     document.getElementById('hotlistGroupModal').addEventListener('hidden.bs.modal', function () {
@@ -287,346 +423,308 @@ async function loadHotlistGroups() {
     }
 }
 
-// Add vehicle row to the form
-function addVehicleRow() {
-    const container = document.getElementById('vehiclesContainer');
-    const vehicleId = vehicleCounter++;
-    
-    const vehicleRow = document.createElement('div');
-    vehicleRow.className = 'card mb-3';
-    vehicleRow.id = `vehicle-${vehicleId}`;
-    vehicleRow.innerHTML = `
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="card-title mb-0">Vehicle ${vehicleId + 1}</h6>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVehicleRow(${vehicleId})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-            
-            <!-- Tabbed Interface for ANPR-compliant fields -->
-            <ul class="nav nav-tabs" id="vehicleTabs-${vehicleId}" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="basic-tab-${vehicleId}" data-bs-toggle="tab" data-bs-target="#basic-${vehicleId}" type="button" role="tab">
-                        Basic Details
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="technical-tab-${vehicleId}" data-bs-toggle="tab" data-bs-target="#technical-${vehicleId}" type="button" role="tab">
-                        Technical Details
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="operational-tab-${vehicleId}" data-bs-toggle="tab" data-bs-target="#operational-${vehicleId}" type="button" role="tab">
-                        ANPR Operational
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="intelligence-tab-${vehicleId}" data-bs-toggle="tab" data-bs-target="#intelligence-${vehicleId}" type="button" role="tab">
-                        Intelligence
-                    </button>
-                </li>
-            </ul>
-            
-            <div class="tab-content mt-3" id="vehicleTabContent-${vehicleId}">
-                <!-- Basic Details Tab -->
-                <div class="tab-pane fade show active" id="basic-${vehicleId}" role="tabpanel">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="licensePlate-${vehicleId}" class="form-label">License Plate (VRM) *</label>
-                                <input type="text" class="form-control" id="licensePlate-${vehicleId}" name="licensePlate" required 
-                                       placeholder="e.g. AB12 CDE">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="vehicleMake-${vehicleId}" class="form-label">Make</label>
-                                <input type="text" class="form-control" id="vehicleMake-${vehicleId}" name="vehicleMake"
-                                       placeholder="e.g. Ford, BMW, Toyota">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="vehicleModel-${vehicleId}" class="form-label">Model</label>
-                                <input type="text" class="form-control" id="vehicleModel-${vehicleId}" name="vehicleModel"
-                                       placeholder="e.g. Focus, X5, Corolla">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="vehicleColor-${vehicleId}" class="form-label">Color</label>
-                                <input type="text" class="form-control" id="vehicleColor-${vehicleId}" name="vehicleColor"
-                                       placeholder="e.g. Blue, Red, Silver">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="bodyType-${vehicleId}" class="form-label">Body Type</label>
-                                <select class="form-select" id="bodyType-${vehicleId}" name="bodyType">
-                                    <option value="">Select Body Type</option>
-                                    <option value="Saloon">Saloon</option>
-                                    <option value="Hatchback">Hatchback</option>
-                                    <option value="Estate">Estate</option>
-                                    <option value="SUV">SUV</option>
-                                    <option value="Coupe">Coupe</option>
-                                    <option value="Convertible">Convertible</option>
-                                    <option value="MPV">MPV</option>
-                                    <option value="Van">Van</option>
-                                    <option value="Truck">Truck</option>
-                                    <option value="Motorcycle">Motorcycle</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="fuelType-${vehicleId}" class="form-label">Fuel Type</label>
-                                <select class="form-select" id="fuelType-${vehicleId}" name="fuelType">
-                                    <option value="">Select Fuel Type</option>
-                                    <option value="Petrol">Petrol</option>
-                                    <option value="Diesel">Diesel</option>
-                                    <option value="Electric">Electric</option>
-                                    <option value="Hybrid">Hybrid</option>
-                                    <option value="LPG">LPG</option>
-                                    <option value="CNG">CNG</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label for="vehicleFeatures-${vehicleId}" class="form-label">Distinctive Features</label>
-                                <input type="text" class="form-control" id="vehicleFeatures-${vehicleId}" name="vehicleFeatures"
-                                       placeholder="e.g. Roof rack, tinted windows">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Technical Details Tab -->
-                <div class="tab-pane fade" id="technical-${vehicleId}" role="tabpanel">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="vinNumber-${vehicleId}" class="form-label">VIN Number</label>
-                                <input type="text" class="form-control" id="vinNumber-${vehicleId}" name="vinNumber" 
-                                       maxlength="17" placeholder="17-character VIN">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="engineNumber-${vehicleId}" class="form-label">Engine Number</label>
-                                <input type="text" class="form-control" id="engineNumber-${vehicleId}" name="engineNumber">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="engineCapacity-${vehicleId}" class="form-label">Engine Capacity (cc)</label>
-                                <input type="number" class="form-control" id="engineCapacity-${vehicleId}" name="engineCapacity" 
-                                       min="0" placeholder="e.g. 1600">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="dateOfFirstRegistration-${vehicleId}" class="form-label">Date of First Registration</label>
-                                <input type="date" class="form-control" id="dateOfFirstRegistration-${vehicleId}" name="dateOfFirstRegistration">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="dateOfFirstUkRegistration-${vehicleId}" class="form-label">Date of First UK Registration</label>
-                                <input type="date" class="form-control" id="dateOfFirstUkRegistration-${vehicleId}" name="dateOfFirstUkRegistration">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="vehicleManufacturedDate-${vehicleId}" class="form-label">Manufacture Date</label>
-                                <input type="date" class="form-control" id="vehicleManufacturedDate-${vehicleId}" name="vehicleManufacturedDate">
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="theftMarker-${vehicleId}" name="theftMarker">
-                                        <label class="form-check-label" for="theftMarker-${vehicleId}">
-                                            Theft Marker
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="scrapMarker-${vehicleId}" name="scrapMarker">
-                                        <label class="form-check-label" for="scrapMarker-${vehicleId}">
-                                            Scrap Marker
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="exportMarker-${vehicleId}" name="exportMarker">
-                                        <label class="form-check-label" for="exportMarker-${vehicleId}">
-                                            Export Marker
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- ANPR Operational Tab -->
-                <div class="tab-pane fade" id="operational-${vehicleId}" role="tabpanel">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="warningMarkers-${vehicleId}" class="form-label">Warning Markers</label>
-                                <input type="text" class="form-control" id="warningMarkers-${vehicleId}" name="warningMarkers"
-                                       placeholder="e.g. FIREARMS, VIOLENT">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="nimCode-${vehicleId}" class="form-label">NIM (5x5x5) Code</label>
-                                <input type="text" class="form-control" id="nimCode-${vehicleId}" name="nimCode"
-                                       placeholder="e.g. 123/45/67">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="forceArea-${vehicleId}" class="form-label">Force/Area</label>
-                                <input type="text" class="form-control" id="forceArea-${vehicleId}" name="forceArea"
-                                       placeholder="e.g. Met Police, Thames Valley">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="weedDate-${vehicleId}" class="form-label">Weed Date</label>
-                                <input type="date" class="form-control" id="weedDate-${vehicleId}" name="weedDate">
-                                <div class="form-text">Date when record should be reviewed/removed</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="pncId-${vehicleId}" class="form-label">PNC ID</label>
-                                <input type="text" class="form-control" id="pncId-${vehicleId}" name="pncId"
-                                       placeholder="Police National Computer ID">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="gpmsMarking-${vehicleId}" class="form-label">GPMS Marking</label>
-                                <select class="form-select" id="gpmsMarking-${vehicleId}" name="gpmsMarking">
-                                    <option value="Unclassified">Unclassified</option>
-                                    <option value="Official">Official</option>
-                                    <option value="Official-Sensitive">Official-Sensitive</option>
-                                    <option value="Secret">Secret</option>
-                                    <option value="Top Secret">Top Secret</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="cadInformation-${vehicleId}" class="form-label">CAD Information</label>
-                                <input type="text" class="form-control" id="cadInformation-${vehicleId}" name="cadInformation"
-                                       placeholder="Command and Control information">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="reviewDate-${vehicleId}" class="form-label">Next Review Date</label>
-                                <input type="date" class="form-control" id="reviewDate-${vehicleId}" name="reviewDate">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Intelligence Tab -->
-                <div class="tab-pane fade" id="intelligence-${vehicleId}" role="tabpanel">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="sourceReference-${vehicleId}" class="form-label">Source Reference</label>
-                                <input type="text" class="form-control" id="sourceReference-${vehicleId}" name="sourceReference"
-                                       placeholder="Intelligence source reference">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="authorizingOfficer-${vehicleId}" class="form-label">Authorizing Officer</label>
-                                <input type="text" class="form-control" id="authorizingOfficer-${vehicleId}" name="authorizingOfficer"
-                                       placeholder="Officer authorizing entry">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="intelligenceInformation-${vehicleId}" class="form-label">Intelligence Information</label>
-                                <textarea class="form-control" id="intelligenceInformation-${vehicleId}" name="intelligenceInformation" 
-                                         rows="3" placeholder="Detailed intelligence information about this vehicle"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="operationalInstructions-${vehicleId}" class="form-label">Operational Instructions</label>
-                                <textarea class="form-control" id="operationalInstructions-${vehicleId}" name="operationalInstructions" 
-                                         rows="3" placeholder="Specific operational instructions for officers"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Legacy fields (marked as deprecated) -->
-                    <hr>
-                    <h6 class="text-muted">Legacy Fields (Deprecated)</h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="vehicleYear-${vehicleId}" class="form-label">Vehicle Year <small class="text-muted">(deprecated)</small></label>
-                                <input type="number" class="form-control" id="vehicleYear-${vehicleId}" name="vehicleYear" 
-                                       min="1900" max="2030" placeholder="Use registration date instead">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="ownerName-${vehicleId}" class="form-label">Owner Name <small class="text-muted">(deprecated)</small></label>
-                                <input type="text" class="form-control" id="ownerName-${vehicleId}" name="ownerName"
-                                       placeholder="Use intelligence information instead">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="notes-${vehicleId}" class="form-label">Notes <small class="text-muted">(deprecated)</small></label>
-                                <textarea class="form-control" id="notes-${vehicleId}" name="notes" rows="2"
-                                         placeholder="Use intelligence information or operational instructions instead"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    container.appendChild(vehicleRow);
+// Load hotlist groups for CSV upload dropdown
+async function loadHotlistGroupsForCsv() {
+    try {
+        const response = await axios.get('/api/hotlist-groups');
+        const select = document.getElementById('csvHotlistSelect');
+        
+        select.innerHTML = '<option value="">Select a hotlist group...</option>';
+        response.data.forEach(group => {
+            select.innerHTML += `<option value="${group.id}">${group.name} (${group.category})</option>`;
+        });
+    } catch (error) {
+        console.error('Error loading hotlist groups for CSV:', error);
+    }
 }
 
+// Toggle advanced fields visibility
+function toggleAdvancedFields() {
+    showAdvancedFields = !showAdvancedFields;
+    const advancedFields = document.querySelectorAll('.advanced-field');
+    const btn = document.getElementById('toggleAdvancedFields');
+    
+    advancedFields.forEach(field => {
+        if (showAdvancedFields) {
+            field.classList.remove('d-none');
+        } else {
+            field.classList.add('d-none');
+        }
+    });
+    
+    btn.innerHTML = showAdvancedFields 
+        ? '<i class="fas fa-cog me-1"></i>Hide Advanced' 
+        : '<i class="fas fa-cog me-1"></i>Advanced Fields';
+}
+
+// Add vehicle row to the grid
+function addVehicleRow() {
+    const tbody = document.getElementById('vehicleGridBody');
+    const vehicleId = vehicleCounter++;
+    
+    const row = document.createElement('tr');
+    row.id = `vehicle-row-${vehicleId}`;
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" id="licensePlate-${vehicleId}" required placeholder="AB12 CDE" tabindex="${vehicleId * 10 + 1}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="vehicleMake-${vehicleId}" placeholder="Ford" tabindex="${vehicleId * 10 + 2}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="vehicleModel-${vehicleId}" placeholder="Focus" tabindex="${vehicleId * 10 + 3}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="vehicleColor-${vehicleId}" placeholder="Blue" tabindex="${vehicleId * 10 + 4}"></td>
+        <td>
+            <select class="form-select form-select-sm" id="bodyType-${vehicleId}" tabindex="${vehicleId * 10 + 5}">
+                <option value="">Select</option>
+                <option value="Saloon">Saloon</option>
+                <option value="Hatchback">Hatchback</option>
+                <option value="Estate">Estate</option>
+                <option value="SUV">SUV</option>
+                <option value="Van">Van</option>
+                <option value="Motorcycle">Motorcycle</option>
+            </select>
+        </td>
+        <td>
+            <select class="form-select form-select-sm" id="fuelType-${vehicleId}" tabindex="${vehicleId * 10 + 6}">
+                <option value="">Select</option>
+                <option value="Petrol">Petrol</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Electric">Electric</option>
+                <option value="Hybrid">Hybrid</option>
+            </select>
+        </td>
+        <!-- Advanced fields -->
+        <td class="advanced-field d-none"><input type="text" class="form-control form-control-sm" id="vinNumber-${vehicleId}" placeholder="VIN" tabindex="${vehicleId * 10 + 7}"></td>
+        <td class="advanced-field d-none"><input type="text" class="form-control form-control-sm" id="warningMarkers-${vehicleId}" placeholder="FIREARMS" tabindex="${vehicleId * 10 + 8}"></td>
+        <td class="advanced-field d-none"><input type="text" class="form-control form-control-sm" id="intelligenceInformation-${vehicleId}" placeholder="Intelligence notes" tabindex="${vehicleId * 10 + 9}"></td>
+        <td class="advanced-field d-none"><input type="text" class="form-control form-control-sm" id="forceArea-${vehicleId}" placeholder="Force" tabindex="${vehicleId * 10 + 10}"></td>
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVehicleRow(${vehicleId})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Focus on the license plate field
+    document.getElementById(`licensePlate-${vehicleId}`).focus();
+}
+
+// Remove vehicle row
 function removeVehicleRow(vehicleId) {
-    const vehicleRow = document.getElementById(`vehicle-${vehicleId}`);
-    if (vehicleRow) {
-        vehicleRow.remove();
+    const row = document.getElementById(`vehicle-row-${vehicleId}`);
+    if (row) {
+        row.remove();
+    }
+}
+
+// CSV Upload functionality
+function handleCsvFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const csv = e.target.result;
+        const lines = csv.split('\n').filter(line => line.trim());
+        
+        if (lines.length === 0) {
+            showAlert('CSV file is empty', 'danger');
+            return;
+        }
+        
+        displayCsvPreview(lines);
+    };
+    reader.readAsText(file);
+}
+
+function displayCsvPreview(lines) {
+    const hasHeaders = document.getElementById('csvHasHeaders').checked;
+    const previewDiv = document.getElementById('csvPreview');
+    const table = document.getElementById('csvPreviewTable');
+    const mappingContainer = document.getElementById('columnMappingContainer');
+    
+    previewDiv.classList.remove('d-none');
+    
+    // Parse CSV data
+    const data = lines.map(line => line.split(',').map(cell => cell.trim().replace(/^"(.*)"$/, '$1')));
+    const headers = hasHeaders ? data[0] : data[0].map((_, i) => `Column ${i + 1}`);
+    const rows = hasHeaders ? data.slice(1, 6) : data.slice(0, 5); // Show first 5 data rows
+    
+    // Display preview table
+    table.innerHTML = `
+        <thead>
+            <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+            ${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+    `;
+    
+    // Create column mapping
+    const fieldMappings = [
+        { key: 'license_plate', label: 'License Plate (Required)', required: true },
+        { key: 'vehicle_make', label: 'Vehicle Make' },
+        { key: 'vehicle_model', label: 'Vehicle Model' },
+        { key: 'vehicle_color', label: 'Vehicle Color' },
+        { key: 'vin_number', label: 'VIN Number' },
+        { key: 'fuel_type', label: 'Fuel Type' },
+        { key: 'body_type', label: 'Body Type' },
+        { key: 'warning_markers', label: 'Warning Markers' },
+        { key: 'intelligence_information', label: 'Intelligence Information' },
+        { key: 'force_area', label: 'Force Area' }
+    ];
+    
+    mappingContainer.innerHTML = fieldMappings.map(field => `
+        <div class="col-md-6 mb-2">
+            <label class="form-label small">${field.label}:</label>
+            <select class="form-select form-select-sm" id="mapping-${field.key}">
+                <option value="">-- Skip --</option>
+                ${headers.map((h, i) => {
+                    const selected = h.toLowerCase().includes(field.key.replace('_', '')) || 
+                                   h.toLowerCase() === field.key ? 'selected' : '';
+                    return `<option value="${i}" ${selected}>${h}</option>`;
+                }).join('')}
+            </select>
+        </div>
+    `).join('');
+    
+    document.getElementById('importCsvBtn').disabled = false;
+}
+
+async function importCsvData() {
+    const hotlistGroupId = document.getElementById('csvHotlistSelect').value;
+    const fileInput = document.getElementById('csvFile');
+    const hasHeaders = document.getElementById('csvHasHeaders').checked;
+    
+    if (!hotlistGroupId || !fileInput.files[0]) {
+        showAlert('Please select a hotlist group and CSV file', 'danger');
+        return;
+    }
+    
+    try {
+        const file = fileInput.files[0];
+        const csv = await file.text();
+        const lines = csv.split('\n').filter(line => line.trim());
+        const data = lines.map(line => line.split(',').map(cell => cell.trim().replace(/^"(.*)"$/, '$1')));
+        const dataRows = hasHeaders ? data.slice(1) : data;
+        
+        // Get column mappings
+        const mappings = {};
+        document.querySelectorAll('[id^="mapping-"]').forEach(select => {
+            const fieldKey = select.id.replace('mapping-', '');
+            const columnIndex = select.value;
+            if (columnIndex !== '') {
+                mappings[fieldKey] = parseInt(columnIndex);
+            }
+        });
+        
+        // Validate required fields
+        if (mappings.license_plate === undefined) {
+            showAlert('License Plate mapping is required', 'danger');
+            return;
+        }
+        
+        // Process vehicles
+        const vehicles = dataRows.map(row => {
+            const vehicle = {};
+            Object.keys(mappings).forEach(fieldKey => {
+                const columnIndex = mappings[fieldKey];
+                if (row[columnIndex]) {
+                    vehicle[fieldKey] = row[columnIndex];
+                }
+            });
+            return vehicle;
+        }).filter(v => v.license_plate); // Only include rows with license plates
+        
+        if (vehicles.length === 0) {
+            showAlert('No valid vehicles found in CSV', 'danger');
+            return;
+        }
+        
+        // Import vehicles
+        document.getElementById('importCsvBtn').disabled = true;
+        document.getElementById('importCsvBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
+        
+        for (const vehicle of vehicles) {
+            vehicle.hotlist_group_id = parseInt(hotlistGroupId);
+            await axios.post('/api/vehicles', vehicle);
+        }
+        
+        showAlert(`Successfully imported ${vehicles.length} vehicles`, 'success');
+        bootstrap.Modal.getInstance(document.getElementById('csvUploadModal')).hide();
+        loadHotlistGroups();
+        
+    } catch (error) {
+        console.error('Error importing CSV:', error);
+        showAlert('Error importing CSV: ' + (error.response?.data?.detail || error.message), 'danger');
+    } finally {
+        document.getElementById('importCsvBtn').disabled = false;
+        document.getElementById('importCsvBtn').innerHTML = 'Import Vehicles';
+    }
+}
+
+function showCsvFormat() {
+    bootstrap.Modal.getInstance(document.getElementById('csvUploadModal')).hide();
+    new bootstrap.Modal(document.getElementById('csvFormatModal')).show();
+}
+
+async function saveHotlistGroup() {
+    const form = document.getElementById('hotlistGroupForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    try {
+        // Collect basic hotlist group data
+        const hotlistData = {
+            name: document.getElementById('hotlistName').value,
+            description: document.getElementById('description').value,
+            category: document.getElementById('category').value,
+            priority: document.getElementById('priority').value,
+            created_by: document.getElementById('createdBy').value,
+            is_active: document.getElementById('isActive').checked,
+            expiry_date: document.getElementById('expiryDate').value || null
+        };
+        
+        // Collect vehicles from grid
+        const vehicles = [];
+        const vehicleRows = document.querySelectorAll('#vehicleGridBody tr');
+        
+        vehicleRows.forEach((row, index) => {
+            const licensePlate = row.querySelector(`input[id^="licensePlate-"]`)?.value;
+            if (licensePlate) {
+                const vehicleId = row.id.split('-')[2];
+                const vehicle = {
+                    license_plate: licensePlate,
+                    vehicle_make: document.getElementById(`vehicleMake-${vehicleId}`)?.value || null,
+                    vehicle_model: document.getElementById(`vehicleModel-${vehicleId}`)?.value || null,
+                    vehicle_color: document.getElementById(`vehicleColor-${vehicleId}`)?.value || null,
+                    body_type: document.getElementById(`bodyType-${vehicleId}`)?.value || null,
+                    fuel_type: document.getElementById(`fuelType-${vehicleId}`)?.value || null,
+                    vin_number: document.getElementById(`vinNumber-${vehicleId}`)?.value || null,
+                    warning_markers: document.getElementById(`warningMarkers-${vehicleId}`)?.value || null,
+                    intelligence_information: document.getElementById(`intelligenceInformation-${vehicleId}`)?.value || null,
+                    force_area: document.getElementById(`forceArea-${vehicleId}`)?.value || null
+                };
+                vehicles.push(vehicle);
+            }
+        });
+        
+        hotlistData.vehicles = vehicles;
+        
+        let response;
+        if (currentHotlistGroupId) {
+            response = await axios.put(`/api/hotlist-groups/${currentHotlistGroupId}`, hotlistData);
+        } else {
+            response = await axios.post('/api/hotlist-groups', hotlistData);
+        }
+        
+        showAlert('Hotlist group saved successfully', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('hotlistGroupModal')).hide();
+        loadHotlistGroups();
+        
+    } catch (error) {
+        console.error('Error saving hotlist group:', error);
+        showAlert('Error saving hotlist group: ' + (error.response?.data?.detail || error.message), 'danger');
     }
 }
 
@@ -638,242 +736,134 @@ async function editHotlistGroup(id) {
         currentHotlistGroupId = id;
         document.getElementById('modalTitle').textContent = 'Edit Hotlist Group';
         
-        // Populate form
+        // Populate basic fields
         document.getElementById('hotlistName').value = group.name;
+        document.getElementById('description').value = group.description;
         document.getElementById('category').value = group.category;
         document.getElementById('priority').value = group.priority;
         document.getElementById('createdBy').value = group.created_by;
-        document.getElementById('description').value = group.description;
         document.getElementById('isActive').checked = group.is_active;
         
         if (group.expiry_date) {
-            document.getElementById('expiryDate').value = new Date(group.expiry_date).toISOString().slice(0, 16);
+            const date = new Date(group.expiry_date);
+            document.getElementById('expiryDate').value = date.toISOString().slice(0, 16);
         }
         
-        // Clear existing vehicles
-        document.getElementById('vehiclesContainer').innerHTML = '';
+        // Clear existing vehicle rows
+        document.getElementById('vehicleGridBody').innerHTML = '';
         vehicleCounter = 0;
         
-        // Add vehicles from the group
+        // Add vehicle rows
         if (group.vehicles && group.vehicles.length > 0) {
             group.vehicles.forEach(vehicle => {
                 addVehicleRow();
                 const vehicleId = vehicleCounter - 1;
-                document.getElementById(`licensePlate-${vehicleId}`).value = vehicle.license_plate;
+                
+                // Populate vehicle data
+                document.getElementById(`licensePlate-${vehicleId}`).value = vehicle.license_plate || '';
                 document.getElementById(`vehicleMake-${vehicleId}`).value = vehicle.vehicle_make || '';
                 document.getElementById(`vehicleModel-${vehicleId}`).value = vehicle.vehicle_model || '';
                 document.getElementById(`vehicleColor-${vehicleId}`).value = vehicle.vehicle_color || '';
-                document.getElementById(`vehicleYear-${vehicleId}`).value = vehicle.vehicle_year || '';
-                document.getElementById(`ownerName-${vehicleId}`).value = vehicle.owner_name || '';
-                document.getElementById(`notes-${vehicleId}`).value = vehicle.notes || '';
+                document.getElementById(`bodyType-${vehicleId}`).value = vehicle.body_type || '';
+                document.getElementById(`fuelType-${vehicleId}`).value = vehicle.fuel_type || '';
+                
+                if (showAdvancedFields) {
+                    document.getElementById(`vinNumber-${vehicleId}`).value = vehicle.vin_number || '';
+                    document.getElementById(`warningMarkers-${vehicleId}`).value = vehicle.warning_markers || '';
+                    document.getElementById(`intelligenceInformation-${vehicleId}`).value = vehicle.intelligence_information || '';
+                    document.getElementById(`forceArea-${vehicleId}`).value = vehicle.force_area || '';
+                }
             });
         } else {
-            // Add one empty vehicle row if no vehicles exist
             addVehicleRow();
         }
         
         new bootstrap.Modal(document.getElementById('hotlistGroupModal')).show();
         
     } catch (error) {
-        console.error('Error loading hotlist:', error);
-        showAlert('Error loading hotlist details', 'danger');
+        console.error('Error loading hotlist group:', error);
+        showAlert('Error loading hotlist group', 'danger');
     }
 }
 
-async function deleteHotlist(id) {
-    if (!confirm('Are you sure you want to delete this hotlist entry?')) return;
+async function deleteHotlistGroup(id) {
+    if (!confirm('Are you sure you want to delete this hotlist group? This action cannot be undone.')) {
+        return;
+    }
     
     try {
-        await axios.delete(`/api/hotlists/${id}`);
-        showAlert('Hotlist deleted successfully', 'success');
-        loadHotlists();
-    } catch (error) {
-        console.error('Error deleting hotlist:', error);
-        showAlert('Error deleting hotlist', 'danger');
-    }
-}
-
-async function saveHotlist() {
-    const formData = {
-        license_plate: document.getElementById('licensePlate').value,
-        category: document.getElementById('category').value,
-        priority: document.getElementById('priority').value,
-        created_by: document.getElementById('createdBy').value,
-        description: document.getElementById('description').value,
-        vehicle_make: document.getElementById('vehicleMake').value || null,
-        vehicle_model: document.getElementById('vehicleModel').value || null,
-        vehicle_color: document.getElementById('vehicleColor').value || null,
-        vehicle_year: document.getElementById('vehicleYear').value || null,
-        owner_name: document.getElementById('ownerName').value || null,
-        notes: document.getElementById('notes').value || null,
-        is_active: document.getElementById('isActive').checked,
-        expiry_date: document.getElementById('expiryDate').value || null
-    };
-    
-    try {
-        if (currentHotlistId) {
-            await axios.put(`/api/hotlists/${currentHotlistId}`, formData);
-            showAlert('Hotlist updated successfully', 'success');
-        } else {
-            await axios.post('/api/hotlists', formData);
-            showAlert('Hotlist created successfully', 'success');
-        }
-        
-        bootstrap.Modal.getInstance(document.getElementById('hotlistModal')).hide();
-        loadHotlists();
-        
-    } catch (error) {
-        console.error('Error saving hotlist:', error);
-        showAlert('Error saving hotlist', 'danger');
-    }
-}
-
-async function saveHotlistGroup() {
-    try {
-        // Collect form data
-        const formData = {
-            name: document.getElementById('hotlistName').value,
-            category: document.getElementById('category').value,
-            priority: document.getElementById('priority').value,
-            created_by: document.getElementById('createdBy').value,
-            description: document.getElementById('description').value,
-            is_active: document.getElementById('isActive').checked,
-            expiry_date: document.getElementById('expiryDate').value || null,
-            vehicles: []
-        };
-        
-        // Collect vehicles data
-        const vehicleCards = document.querySelectorAll('#vehiclesContainer .card');
-        vehicleCards.forEach(card => {
-            const vehicleId = card.id.split('-')[1];
-            const licensePlate = document.getElementById(`licensePlate-${vehicleId}`).value;
-            
-            // Only add vehicle if license plate is provided
-            if (licensePlate.trim()) {
-                const vehicleData = {
-                    // Basic vehicle identification
-                    license_plate: licensePlate,
-                    vehicle_make: document.getElementById(`vehicleMake-${vehicleId}`).value || null,
-                    vehicle_model: document.getElementById(`vehicleModel-${vehicleId}`).value || null,
-                    vehicle_color: document.getElementById(`vehicleColor-${vehicleId}`).value || null,
-                    
-                    // Extended ANPR-compliant vehicle details
-                    vin_number: document.getElementById(`vinNumber-${vehicleId}`).value || null,
-                    engine_number: document.getElementById(`engineNumber-${vehicleId}`).value || null,
-                    engine_capacity: document.getElementById(`engineCapacity-${vehicleId}`).value ? parseInt(document.getElementById(`engineCapacity-${vehicleId}`).value) : null,
-                    fuel_type: document.getElementById(`fuelType-${vehicleId}`).value || null,
-                    body_type: document.getElementById(`bodyType-${vehicleId}`).value || null,
-                    
-                    // Registration information
-                    date_of_first_registration: document.getElementById(`dateOfFirstRegistration-${vehicleId}`).value || null,
-                    date_of_first_uk_registration: document.getElementById(`dateOfFirstUkRegistration-${vehicleId}`).value || null,
-                    vehicle_manufactured_date: document.getElementById(`vehicleManufacturedDate-${vehicleId}`).value || null,
-                    
-                    // ANPR-specific operational fields
-                    warning_markers: document.getElementById(`warningMarkers-${vehicleId}`).value || null,
-                    nim_code: document.getElementById(`nimCode-${vehicleId}`).value || null,
-                    force_area: document.getElementById(`forceArea-${vehicleId}`).value || null,
-                    weed_date: document.getElementById(`weedDate-${vehicleId}`).value || null,
-                    pnc_id: document.getElementById(`pncId-${vehicleId}`).value || null,
-                    gpms_marking: document.getElementById(`gpmsMarking-${vehicleId}`).value || "Unclassified",
-                    cad_information: document.getElementById(`cadInformation-${vehicleId}`).value || null,
-                    
-                    // Additional operational data
-                    theft_marker: document.getElementById(`theftMarker-${vehicleId}`).checked || false,
-                    scrap_marker: document.getElementById(`scrapMarker-${vehicleId}`).checked || false,
-                    export_marker: document.getElementById(`exportMarker-${vehicleId}`).checked || false,
-                    
-                    // Extended description and intelligence
-                    intelligence_information: document.getElementById(`intelligenceInformation-${vehicleId}`).value || null,
-                    operational_instructions: document.getElementById(`operationalInstructions-${vehicleId}`).value || null,
-                    vehicle_features: document.getElementById(`vehicleFeatures-${vehicleId}`).value || null,
-                    
-                    // Audit and tracking
-                    source_reference: document.getElementById(`sourceReference-${vehicleId}`).value || null,
-                    authorizing_officer: document.getElementById(`authorizingOfficer-${vehicleId}`).value || null,
-                    review_date: document.getElementById(`reviewDate-${vehicleId}`).value || null,
-                    
-                    // Legacy fields for backward compatibility
-                    vehicle_year: document.getElementById(`vehicleYear-${vehicleId}`).value ? parseInt(document.getElementById(`vehicleYear-${vehicleId}`).value) : null,
-                    owner_name: document.getElementById(`ownerName-${vehicleId}`).value || null,
-                    notes: document.getElementById(`notes-${vehicleId}`).value || null
-                };
-                
-                formData.vehicles.push(vehicleData);
-            }
-        });
-        
-        // Validate that at least one vehicle is provided
-        if (formData.vehicles.length === 0) {
-            showAlert('Please add at least one vehicle with a license plate', 'danger');
-            return;
-        }
-        
-        let response;
-        if (currentHotlistGroupId) {
-            response = await axios.put(`/api/hotlist-groups/${currentHotlistGroupId}`, formData);
-            showAlert('Hotlist group updated successfully', 'success');
-        } else {
-            response = await axios.post('/api/hotlist-groups', formData);
-            showAlert('Hotlist group created successfully', 'success');
-        }
-        
-        bootstrap.Modal.getInstance(document.getElementById('hotlistGroupModal')).hide();
+        await axios.delete(`/api/hotlist-groups/${id}`);
+        showAlert('Hotlist group deleted successfully', 'success');
         loadHotlistGroups();
-        resetHotlistGroupForm();
-        
     } catch (error) {
-        console.error('Error saving hotlist group:', error);
-        showAlert('Error saving hotlist group: ' + (error.response?.data?.detail || error.message), 'danger');
+        console.error('Error deleting hotlist group:', error);
+        showAlert('Error deleting hotlist group', 'danger');
     }
-}
-
-function resetForm() {
-    currentHotlistId = null;
-    document.getElementById('modalTitle').textContent = 'Add Hotlist Entry';
-    document.getElementById('hotlistForm').reset();
-    document.getElementById('priority').value = 'medium';
-    document.getElementById('isActive').checked = true;
 }
 
 function resetHotlistGroupForm() {
     currentHotlistGroupId = null;
     document.getElementById('modalTitle').textContent = 'Add Hotlist Group';
     document.getElementById('hotlistGroupForm').reset();
-    document.getElementById('priority').value = 'medium';
-    document.getElementById('isActive').checked = true;
-    document.getElementById('vehiclesContainer').innerHTML = '';
+    document.getElementById('vehicleGridBody').innerHTML = '';
     vehicleCounter = 0;
     addVehicleRow();
+    
+    // Reset advanced fields
+    showAdvancedFields = false;
+    document.querySelectorAll('.advanced-field').forEach(field => field.classList.add('d-none'));
+    document.getElementById('toggleAdvancedFields').innerHTML = '<i class="fas fa-cog me-1"></i>Advanced Fields';
 }
 
+// Helper functions
 function getCategoryColor(category) {
     const colors = {
-        stolen: 'danger',
-        wanted: 'warning',
-        bolo: 'info',
-        suspicious: 'secondary'
+        'stolen': 'danger',
+        'wanted': 'warning',
+        'bolo': 'info',
+        'suspicious': 'secondary'
     };
     return colors[category] || 'primary';
 }
 
 function getPriorityColor(priority) {
     const colors = {
-        low: 'success',
-        medium: 'warning',
-        high: 'danger',
-        critical: 'dark'
+        'low': 'secondary',
+        'medium': 'primary',
+        'high': 'warning',
+        'critical': 'danger'
     };
     return colors[priority] || 'primary';
 }
 
 function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('en-GB', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
-function showAlert(message, type) {
-    // Simple alert for now - could be enhanced with toast notifications
-    alert(message);
+function showAlert(message, type = 'info') {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
 }
 </script>
 {% endblock %} 

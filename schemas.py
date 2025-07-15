@@ -58,7 +58,7 @@ class VehicleBase(BaseModel):
     review_date: Optional[date] = Field(None, description="Date for next review")
     
     # Legacy fields for backward compatibility
-    vehicle_year: Optional[int] = Field(None, ge=1900, le=2030, description="Vehicle year (deprecated, use date_of_first_registration)")
+    # vehicle_year deprecated - use date_of_first_registration instead
     owner_name: Optional[str] = Field(None, max_length=200, description="Vehicle owner name (deprecated)")
     notes: Optional[str] = Field(None, description="Additional notes (deprecated, use intelligence_information)")
 
@@ -109,7 +109,7 @@ class HotlistBase(BaseModel):
     vehicle_make: Optional[str] = Field(None, max_length=50)
     vehicle_model: Optional[str] = Field(None, max_length=50)
     vehicle_color: Optional[str] = Field(None, max_length=30)
-    vehicle_year: Optional[int] = Field(None, ge=1900, le=2030)
+    # vehicle_year deprecated
     owner_name: Optional[str] = Field(None, max_length=200)
     notes: Optional[str] = None
 
@@ -127,7 +127,7 @@ class HotlistUpdate(BaseModel):
     vehicle_make: Optional[str] = Field(None, max_length=50)
     vehicle_model: Optional[str] = Field(None, max_length=50)
     vehicle_color: Optional[str] = Field(None, max_length=30)
-    vehicle_year: Optional[int] = Field(None, ge=1900, le=2030)
+    # vehicle_year deprecated
     owner_name: Optional[str] = Field(None, max_length=200)
     notes: Optional[str] = None
 

@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List, Optional
+from pydantic import BaseModel
 import uvicorn
 import asyncio
 import logging
@@ -265,6 +266,8 @@ async def delete_hotlist(hotlist_id: int, db: Session = Depends(get_db)):
 @app.post("/api/hotlist-groups", response_model=HotlistGroupResponse)
 async def create_hotlist_group(hotlist_group: HotlistGroupCreate, db: Session = Depends(get_db)):
     """Create a new hotlist group with multiple vehicles"""
+    print(f"DEBUG: Starting to create hotlist group: {hotlist_group.name}")
+    
     # Create the hotlist group
     db_hotlist_group = HotlistGroup(
         name=hotlist_group.name,
@@ -275,17 +278,35 @@ async def create_hotlist_group(hotlist_group: HotlistGroupCreate, db: Session = 
         is_active=hotlist_group.is_active,
         expiry_date=hotlist_group.expiry_date
     )
+    print(f"DEBUG: Created HotlistGroup object")
+    
     db.add(db_hotlist_group)
+    print(f"DEBUG: Added to session")
+    
     db.commit()
+    print(f"DEBUG: Committed hotlist group")
+    
     db.refresh(db_hotlist_group)
+    print(f"DEBUG: Refreshed, ID: {db_hotlist_group.id}")
     
     # Add vehicles to the group
-    for vehicle_data in hotlist_group.vehicles:
+    print(f"DEBUG: Adding {len(hotlist_group.vehicles)} vehicles")
+    for i, vehicle_data in enumerate(hotlist_group.vehicles):
+        print(f"DEBUG: Creating vehicle {i+1}: {vehicle_data.license_plate}")
+        
+        # Get all vehicle data and filter out None values and deprecated fields
+        vehicle_dict = vehicle_data.model_dump(exclude_none=True)
+        vehicle_dict.pop('vehicle_year', None)  # Remove deprecated field if present
+        
+        # Create vehicle with all provided fields
         db_vehicle = Hotlist(
             hotlist_group_id=db_hotlist_group.id,
-            **vehicle_data.model_dump()
+            **vehicle_dict
         )
+        print(f"DEBUG: Created Hotlist object for vehicle {i+1}")
+        
         db.add(db_vehicle)
+        print(f"DEBUG: Added vehicle {i+1} to session")
     
     db.commit()
     db.refresh(db_hotlist_group)
@@ -381,6 +402,125 @@ async def delete_hotlist_group(group_id: int, db: Session = Depends(get_db)):
     increment_hotlist_repository_revision(db)
     
     return {"message": "Hotlist group deleted successfully"}
+
+# API Routes - Individual Vehicles
+class VehicleCreateWithGroup(BaseModel):
+    hotlist_group_id: int
+    license_plate: str
+    vehicle_make: Optional[str] = None
+    vehicle_model: Optional[str] = None
+    vehicle_color: Optional[str] = None
+    vin_number: Optional[str] = None
+    fuel_type: Optional[str] = None
+    body_type: Optional[str] = None
+    warning_markers: Optional[str] = None
+    intelligence_information: Optional[str] = None
+    force_area: Optional[str] = None
+
+@app.post("/api/vehicles", response_model=VehicleResponse)
+async def create_vehicle(vehicle: VehicleCreateWithGroup, db: Session = Depends(get_db)):
+    """Create a new vehicle in a specific hotlist group"""
+    # Check if hotlist group exists
+    hotlist_group = db.query(HotlistGroup).filter(HotlistGroup.id == vehicle.hotlist_group_id).first()
+    if not hotlist_group:
+        raise HTTPException(status_code=404, detail="Hotlist group not found")
+    
+    # Create the vehicle
+    vehicle_data = vehicle.model_dump()
+    hotlist_group_id = vehicle_data.pop('hotlist_group_id')
+    vehicle_data.pop('vehicle_year', None)  # Remove deprecated field if present
+    
+    db_vehicle = Hotlist(
+        hotlist_group_id=hotlist_group_id,
+        **vehicle_data
+    )
+    db.add(db_vehicle)
+    db.commit()
+    db.refresh(db_vehicle)
+    
+    # Increment global repository revision
+    increment_hotlist_repository_revision(db)
+    
+    return db_vehicle
+
+@app.post("/api/hotlist-groups/{group_id}/upload-csv")
+async def upload_csv_to_hotlist(
+    group_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Upload a CSV file of vehicles to a hotlist group"""
+    # Check if hotlist group exists
+    hotlist_group = db.query(HotlistGroup).filter(HotlistGroup.id == group_id).first()
+    if not hotlist_group:
+        raise HTTPException(status_code=404, detail="Hotlist group not found")
+    
+    # Validate file type
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File must be a CSV")
+    
+    try:
+        # Read CSV content
+        content = await file.read()
+        content_str = content.decode('utf-8')
+        
+        # Parse CSV
+        csv_reader = csv.DictReader(io.StringIO(content_str))
+        vehicles_added = 0
+        
+        for row in csv_reader:
+            # Clean up the row data
+            vehicle_data = {}
+            for key, value in row.items():
+                if value and value.strip():  # Only include non-empty values
+                    # Map common field variations
+                    key_lower = key.lower().strip()
+                    if key_lower in ['license_plate', 'licence_plate', 'vrm', 'plate']:
+                        vehicle_data['license_plate'] = value.strip()
+                    elif key_lower in ['vehicle_make', 'make']:
+                        vehicle_data['vehicle_make'] = value.strip()
+                    elif key_lower in ['vehicle_model', 'model']:
+                        vehicle_data['vehicle_model'] = value.strip()
+                    elif key_lower in ['vehicle_color', 'vehicle_colour', 'color', 'colour']:
+                        vehicle_data['vehicle_color'] = value.strip()
+                    elif key_lower in ['fuel_type', 'fuel']:
+                        vehicle_data['fuel_type'] = value.strip()
+                    elif key_lower in ['body_type', 'body']:
+                        vehicle_data['body_type'] = value.strip()
+                    elif key_lower in ['vin_number', 'vin']:
+                        vehicle_data['vin_number'] = value.strip()
+                    elif key_lower in ['warning_markers', 'warnings']:
+                        vehicle_data['warning_markers'] = value.strip()
+                    elif key_lower in ['intelligence_information', 'intelligence', 'info']:
+                        vehicle_data['intelligence_information'] = value.strip()
+                    elif key_lower in ['force_area', 'force']:
+                        vehicle_data['force_area'] = value.strip()
+            
+            # License plate is required
+            if 'license_plate' not in vehicle_data:
+                continue
+                
+            # Create the vehicle
+            db_vehicle = Hotlist(
+                hotlist_group_id=group_id,
+                **vehicle_data
+            )
+            db.add(db_vehicle)
+            vehicles_added += 1
+        
+        # Commit all vehicles
+        db.commit()
+        
+        # Increment global repository revision
+        increment_hotlist_repository_revision(db)
+        
+        return {
+            "message": f"Successfully uploaded {vehicles_added} vehicles to hotlist group '{hotlist_group.name}'",
+            "vehicles_added": vehicles_added
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error processing CSV file: {str(e)}")
 
 # API Routes - ANPR Reads
 @app.post("/anpr/reads", response_model=ANPRReadResponse)
