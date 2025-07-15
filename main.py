@@ -213,9 +213,7 @@ async def get_hotlist_groups(
     
     if search:
         query = query.filter(
-            HotlistGroup.name.ilike(f"%{search}%") |
-            HotlistGroup.description.ilike(f"%{search}%") |
-            HotlistGroup.category.ilike(f"%{search}%")
+            HotlistGroup.name.ilike(f"%{search}%")
         )
     
     hotlist_groups = query.offset(skip).limit(limit).all()
