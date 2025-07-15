@@ -5,64 +5,62 @@ from typing import Optional, List
 # Hotlist Group Schemas
 class HotlistGroupBase(BaseModel):
     name: str = Field(..., max_length=100, description="Name of the hotlist")
-    description: str = Field(..., description="Description of the hotlist purpose")
-    category: str = Field(..., max_length=50, description="Category (stolen, wanted, bolo, etc.)")
-    priority: str = Field("medium", description="Priority level (low, medium, high, critical)")
-    created_by: str = Field(..., max_length=100, description="User who created this hotlist")
     is_active: bool = Field(True, description="Whether this hotlist is active")
-    expiry_date: Optional[datetime] = Field(None, description="When this hotlist expires")
 
 class VehicleBase(BaseModel):
-    # Basic vehicle identification (mandatory)
-    license_plate: str = Field(..., max_length=20, description="Vehicle Registration Mark (VRM)")
+    """UK ANPR Regulation 109 compliant vehicle schema - 16 fields"""
     
-    # Basic vehicle information
+    # 1. VRM (Vehicle Registration Mark) - Required
+    license_plate: str = Field(..., max_length=10, description="Vehicle Registration Mark (VRM)")
+    
+    # 2. Vehicle Make
     vehicle_make: Optional[str] = Field(None, max_length=50, description="Vehicle manufacturer")
+    
+    # 3. Vehicle Model
     vehicle_model: Optional[str] = Field(None, max_length=50, description="Vehicle model")
+    
+    # 4. Vehicle Colour
     vehicle_color: Optional[str] = Field(None, max_length=30, description="Vehicle colour")
     
-    # Extended ANPR-compliant vehicle details
-    vin_number: Optional[str] = Field(None, max_length=17, description="Vehicle Identification Number")
-    engine_number: Optional[str] = Field(None, max_length=50, description="Engine number")
-    engine_capacity: Optional[int] = Field(None, ge=0, description="Engine capacity in cc")
-    fuel_type: Optional[str] = Field(None, max_length=20, description="Fuel type (Petrol, Diesel, Electric, Hybrid)")
-    body_type: Optional[str] = Field(None, max_length=30, description="Body type (Saloon, Hatchback, Estate, etc.)")
+    # 5. Action - calculated dynamically from group settings
     
-    # Registration information
-    date_of_first_registration: Optional[date] = Field(None, description="Date of first registration")
-    date_of_first_uk_registration: Optional[date] = Field(None, description="Date of first UK registration")
-    vehicle_manufactured_date: Optional[date] = Field(None, description="Vehicle manufacture date")
-    
-    # ANPR-specific operational fields
+    # 6. Warning Markers
     warning_markers: Optional[str] = Field(None, max_length=100, description="Warning markers for the vehicle")
+    
+    # 7. Reason - calculated dynamically from group settings
+    
+    # 8. NIM (5x5x5) Code
     nim_code: Optional[str] = Field(None, max_length=20, description="NIM (5x5x5) Code")
+    
+    # 9. Information/Action
+    intelligence_information: Optional[str] = Field(None, description="Intelligence information and action required")
+    
+    # 10. Force & Area
     force_area: Optional[str] = Field(None, max_length=50, description="Police force/area identifier")
+    
+    # 11. Weed Date
     weed_date: Optional[date] = Field(None, description="Date when record should be reviewed/removed")
+    
+    # 12. PNC ID
     pnc_id: Optional[str] = Field(None, max_length=50, description="Police National Computer ID")
+    
+    # 13. GPMS Marking
     gpms_marking: Optional[str] = Field("Unclassified", max_length=20, description="GPMS classification")
+    
+    # 14. CAD Information
     cad_information: Optional[str] = Field(None, max_length=200, description="Command and Control information")
     
-    # Additional operational data
-    theft_marker: Optional[bool] = Field(False, description="Vehicle stolen marker")
-    scrap_marker: Optional[bool] = Field(False, description="Vehicle scrapped marker")
-    export_marker: Optional[bool] = Field(False, description="Vehicle exported marker")
-    
-    # Extended description and intelligence
-    intelligence_information: Optional[str] = Field(None, description="Additional intelligence information")
+    # 15. Operational Instructions (Spare 1)
     operational_instructions: Optional[str] = Field(None, description="Specific operational instructions")
-    vehicle_features: Optional[str] = Field(None, max_length=200, description="Distinctive vehicle features")
     
-    # Audit and tracking
+    # 16. Source Reference (Spare 2)
     source_reference: Optional[str] = Field(None, max_length=100, description="Source of the intelligence")
-    authorizing_officer: Optional[str] = Field(None, max_length=100, description="Officer authorizing the entry")
-    review_date: Optional[date] = Field(None, description="Date for next review")
-    
-    # Legacy fields for backward compatibility
-    # vehicle_year deprecated - use date_of_first_registration instead
-    owner_name: Optional[str] = Field(None, max_length=200, description="Vehicle owner name (deprecated)")
-    notes: Optional[str] = Field(None, description="Additional notes (deprecated, use intelligence_information)")
 
 class VehicleCreate(VehicleBase):
+    pass
+
+class VehicleCreateWithGroup(VehicleBase):
+    """Vehicle creation schema that includes group assignment"""
     pass
 
 class VehicleResponse(VehicleBase):
@@ -74,16 +72,11 @@ class VehicleResponse(VehicleBase):
     model_config = ConfigDict(from_attributes=True)
 
 class HotlistGroupCreate(HotlistGroupBase):
-    vehicles: List[VehicleCreate] = Field(..., description="List of vehicles in this hotlist")
+    vehicles: List[VehicleCreate] = Field(default_factory=list, description="List of vehicles in this hotlist")
 
 class HotlistGroupUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=100)
-    description: Optional[str] = None
-    category: Optional[str] = Field(None, max_length=50)
-    priority: Optional[str] = None
-    created_by: Optional[str] = Field(None, max_length=100)
     is_active: Optional[bool] = None
-    expiry_date: Optional[datetime] = None
     vehicles: Optional[List[VehicleCreate]] = None
 
 class HotlistGroupResponse(HotlistGroupBase):
@@ -95,72 +88,35 @@ class HotlistGroupResponse(HotlistGroupBase):
     
     model_config = ConfigDict(from_attributes=True)
 
-# Legacy Hotlist Schemas (for backward compatibility)
-class HotlistBase(BaseModel):
-    license_plate: str = Field(..., max_length=20, description="Vehicle license plate number")
-    description: str = Field(..., description="Description of why this vehicle is on the hotlist")
-    category: str = Field(..., max_length=50, description="Category (stolen, wanted, bolo, etc.)")
-    priority: str = Field("medium", description="Priority level (low, medium, high, critical)")
-    created_by: str = Field(..., max_length=100, description="User who created this entry")
-    is_active: bool = Field(True, description="Whether this hotlist entry is active")
-    expiry_date: Optional[datetime] = Field(None, description="When this hotlist entry expires")
-    
-    # Vehicle details
-    vehicle_make: Optional[str] = Field(None, max_length=50)
-    vehicle_model: Optional[str] = Field(None, max_length=50)
-    vehicle_color: Optional[str] = Field(None, max_length=30)
-    # vehicle_year deprecated
-    owner_name: Optional[str] = Field(None, max_length=200)
-    notes: Optional[str] = None
-
-class HotlistCreate(HotlistBase):
-    pass
-
-class HotlistUpdate(BaseModel):
-    license_plate: Optional[str] = Field(None, max_length=20)
-    description: Optional[str] = None
-    category: Optional[str] = Field(None, max_length=50)
-    priority: Optional[str] = None
-    created_by: Optional[str] = Field(None, max_length=100)
-    is_active: Optional[bool] = None
-    expiry_date: Optional[datetime] = None
-    vehicle_make: Optional[str] = Field(None, max_length=50)
-    vehicle_model: Optional[str] = Field(None, max_length=50)
-    vehicle_color: Optional[str] = Field(None, max_length=30)
-    # vehicle_year deprecated
-    owner_name: Optional[str] = Field(None, max_length=200)
-    notes: Optional[str] = None
-
-class HotlistResponse(HotlistBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    revision: int
-    
-    model_config = ConfigDict(from_attributes=True)
-
 # ANPR Read Schemas
 class ANPRReadBase(BaseModel):
     license_plate: str = Field(..., max_length=20, description="Detected license plate")
     camera_id: str = Field(..., max_length=50, description="Camera identifier")
     location: str = Field(..., max_length=200, description="Camera location")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Detection timestamp")
     confidence: int = Field(0, ge=0, le=100, description="Detection confidence percentage")
     direction: Optional[str] = Field(None, max_length=20, description="Vehicle direction")
     speed: Optional[int] = Field(None, ge=0, description="Vehicle speed in km/h")
     lane: Optional[int] = Field(None, ge=1, description="Lane number")
+    plate_image_path: Optional[str] = Field(None, max_length=500, description="Path to plate image")
+    context_image_path: Optional[str] = Field(None, max_length=500, description="Path to context image")
+    hotlist_match: bool = Field(False, description="Whether this read matched a hotlist")
+    hotlist_id: Optional[int] = Field(None, description="ID of matched hotlist entry")
 
 class ANPRReadCreate(ANPRReadBase):
     pass
 
 class ANPRReadResponse(ANPRReadBase):
     id: int
-    timestamp: datetime
-    plate_image_path: Optional[str] = None
-    context_image_path: Optional[str] = None
-    hotlist_match: bool
-    hotlist_id: Optional[int] = None
     
     model_config = ConfigDict(from_attributes=True)
+
+# System Stats Schema
+class SystemStats(BaseModel):
+    total_hotlists: int = Field(..., description="Total number of active hotlist entries")
+    total_anpr_reads: int = Field(..., description="Total number of ANPR reads")
+    hotlist_matches: int = Field(..., description="Number of hotlist matches")
+    system_status: str = Field(..., description="System operational status")
 
 # BOF-specific schemas for hotlist synchronization
 class BofHotlistRevisions(BaseModel):
@@ -177,77 +133,22 @@ class BofHotlistData(BaseModel):
     hotlist_deltas: Optional[str] = Field(None, description="Base64 encoded ZIP file containing hotlist updates")
     is_file_too_big: bool = Field(False, description="Whether the update file is too big")
 
-class ExternalHotlistRevisions(BaseModel):
-    """External hotlist revision information sent by devices"""
-    hotlist_name: str = Field(..., description="Name of the hotlist")
-    current_revision: int = Field(..., description="Current revision the device has")
+class BofRepoStatusResponse(BaseModel):
+    """BOF repository status response"""
+    source_id: str = Field(..., description="Source identifier")
+    revision_number: int = Field(..., description="Current revision number")
+    hotlists: List[BofHotlistRevisions] = Field(default_factory=list, description="Available hotlists")
 
-class DeviceSourceCreate(BaseModel):
-    source_id: str = Field(..., max_length=10, description="BOF source identifier")
-    name: str = Field(..., max_length=100, description="Device name")
-    description: Optional[str] = Field(None, description="Device description")
-    is_active: bool = Field(True, description="Whether the device is active")
+class BofHotlistStatusResponse(BaseModel):
+    """BOF hotlist status response for a specific device"""
+    source_id: str = Field(..., description="Source identifier")
+    hotlists: List[BofHotlistRevisions] = Field(default_factory=list, description="Hotlist status for this device")
 
-class DeviceSourceResponse(BaseModel):
-    id: int
-    source_id: str
-    name: str
-    description: Optional[str] = None
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-    
-    model_config = ConfigDict(from_attributes=True)
-
-class HotlistRevisionResponse(BaseModel):
-    id: int
-    hotlist_id: int
-    device_source_id: int
-    hotlist_name: str
-    latest_revision: int
-    external_system_revision: int
-    is_allocated: bool
-    created_at: datetime
-    updated_at: datetime
-    
-    model_config = ConfigDict(from_attributes=True)
-
-# BOF Web Service Request/Response schemas
-class GetHotlistRepoStatusRequest(BaseModel):
-    source_id: str = Field(..., description="Source ID for the camera group")
-    revision_number: int = Field(..., description="Current revision held by the camera group")
-
-class GetHotlistStatusRequest(BaseModel):
-    source_id: str = Field(..., description="Source ID for the camera group")
-
-class SetHotlistStatusRequest(BaseModel):
-    source_id: str = Field(..., description="Source ID for the camera group")
-    hotlists_and_revisions: List[ExternalHotlistRevisions] = Field(..., description="Array of hotlist revisions")
-
-class GetHotlistUpdatesRequest(BaseModel):
-    source_id: str = Field(..., description="Source ID for the camera group")
-    hotlist_name: str = Field(..., description="Name of the hotlist to update")
-
-class GetHotlistUpdatesRestrictSizeRequest(BaseModel):
-    source_id: str = Field(..., description="Source ID for the camera group")
-    hotlist_name: str = Field(..., description="Name of the hotlist to update")
-    size: int = Field(..., description="Maximum size of the update to receive")
-
-class GetMultipleHotlistUpdatesRequest(BaseModel):
-    source_id: str = Field(..., description="Source ID for the camera group")
-    hotlist_names: List[str] = Field(..., description="Names of hotlists to update")
-
-class GetMultipleHotlistUpdatesRestrictSizeRequest(BaseModel):
-    source_id: str = Field(..., description="Source ID for the camera group")
-    hotlist_names: List[str] = Field(..., description="Names of hotlists to update")
-    size: int = Field(..., description="Maximum size of each update to receive")
-
-# Statistics Schema
-class StatsResponse(BaseModel):
-    total_hotlists: int
-    total_reads: int
-    hotlist_matches: int
-    match_rate: float 
+class BofCaptureResponse(BaseModel):
+    """Response for BOF capture operations"""
+    success: bool = Field(..., description="Whether the operation was successful")
+    message: str = Field(..., description="Response message")
+    read_id: Optional[int] = Field(None, description="Created ANPR read ID")
 
 # BOF Capture/Input schemas
 class BofSendCaptureRequest(BaseModel):
@@ -269,27 +170,28 @@ class BofSendCaptureRequest(BaseModel):
     motionTowardCamera: Optional[bool] = Field(None, description="Whether motion is toward camera")
 
 class BofSendCompactCaptureRequest(BaseModel):
-    """BOF sendCompactCapture request with pipe-delimited capture string"""
-    capture: str = Field(..., description="Pipe-delimited capture string")
+    """BOF sendCompactCapture request with pipe-delimited capture data"""
+    capture: str = Field(..., description="Pipe-delimited capture data string")
 
 class BofSendCompoundCaptureRequest(BaseModel):
-    """BOF sendCompoundCapture request with multiple captures"""
-    captures: List[str] = Field(..., description="Array of pipe-delimited capture strings")
+    """BOF sendCompoundCapture request with multiple compact captures"""
+    captures: List[str] = Field(..., max_items=50, description="List of pipe-delimited capture strings (max 50)")
+
+# Configuration schemas
+class ANPRConfiguration(BaseModel):
+    """ANPR system configuration"""
+    camera_locations: List[str] = Field(default_factory=list, description="Configured camera locations")
+    system_status: str = Field("operational", description="System status")
+    last_updated: datetime = Field(default_factory=datetime.utcnow, description="Last configuration update")
+
+class ConnectivityStatus(BaseModel):
+    """System connectivity status"""
+    status: str = Field(..., description="Connectivity status")
+    message: str = Field(..., description="Status message")
+    last_check: datetime = Field(default_factory=datetime.utcnow, description="Last connectivity check")
 
 class BofAddBinaryCaptureDataRequest(BaseModel):
-    """BOF addBinaryCaptureData request for binary image data"""
-    signature: str = Field(..., description="Authentication signature")
-    username: str = Field(..., description="Username")
-    vrm: str = Field(..., description="Vehicle Registration Mark")
-    feedIdentifier: int = Field(..., description="Feed identifier")
-    sourceIdentifier: int = Field(..., description="Source identifier")
-    cameraIdentifier: int = Field(..., description="Camera identifier")
-    captureTime: str = Field(..., description="Capture time in ISO format")
-    binaryImage: str = Field(..., description="Base64 encoded binary image")
-    binaryDataType: str = Field(..., description="Type of binary data (P=plate, C=context)")
-
-class BofCaptureResponse(BaseModel):
-    """Standard BOF capture response"""
-    status: str = Field(..., description="Response status")
-    message: str = Field(..., description="Response message")
-    read_id: Optional[int] = Field(None, description="Created ANPR read ID") 
+    """BOF addBinaryCaptureData request for sending binary image data"""
+    captureGUID: str = Field(..., description="Unique identifier for the capture")
+    imageType: str = Field(..., description="Type of image (P for plate, C for context)")
+    binaryData: str = Field(..., description="Base64 encoded binary image data") 

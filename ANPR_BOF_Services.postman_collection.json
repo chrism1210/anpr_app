@@ -1,9 +1,10 @@
 {
 	"info": {
 		"_postman_id": "12345678-1234-1234-1234-123456789abc",
-		"name": "ANPR BOF Services",
-		"description": "Complete collection for testing ANPR BOF (Back Office Facility) hotlist synchronization services according to SDR-143 specification",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"name": "ANPR BOF Services - Complete Collection",
+		"description": "Complete collection for testing ANPR BOF (Back Office Facility) services with enhanced hotlist group management, CSV upload functionality, and UK ANPR Regulation 109 compliance",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
 	},
 	"item": [
 		{
@@ -16,15 +17,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistRepoStatus?sourceID={{source_id}}&revisionnumber={{revision_number}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"UpdateHotlistsService",
-								"getHotlistRepoStatus"
-							],
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "UpdateHotlistsService", "getHotlistRepoStatus"],
 							"query": [
 								{
 									"key": "sourceID",
@@ -49,15 +43,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistStatus?sourceID={{source_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"UpdateHotlistsService",
-								"getHotlistStatus"
-							],
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "UpdateHotlistsService", "getHotlistStatus"],
 							"query": [
 								{
 									"key": "sourceID",
@@ -66,7 +53,7 @@
 								}
 							]
 						},
-						"description": "Gets the hotlist status array for a source, showing revision information for each hotlist."
+						"description": "Gets the hotlist status array showing revision information for each hotlist group."
 					},
 					"response": []
 				},
@@ -82,21 +69,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"sourceID\": \"{{source_id}}\",\n    \"hotlistname\": \"hotlist_TEST123\",\n    \"externalSystemRevision\": 1\n}"
+							"raw": "{\n    \"sourceID\": \"{{source_id}}\",\n    \"hotlistname\": \"{{hotlist_group_name}}\",\n    \"externalSystemRevision\": 1\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/setHotlistStatus",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"UpdateHotlistsService",
-								"setHotlistStatus"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "UpdateHotlistsService", "setHotlistStatus"]
 						},
-						"description": "Updates the device's hotlist status with the current revision number it has."
+						"description": "Updates the device's hotlist status with the current revision number for a hotlist group."
 					},
 					"response": []
 				},
@@ -106,16 +86,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistUpdates?sourceID={{source_id}}&hotlistname={{hotlist_name}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"UpdateHotlistsService",
-								"getHotlistUpdates"
-							],
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistUpdates?sourceID={{source_id}}&hotlistname={{hotlist_group_name}}",
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "UpdateHotlistsService", "getHotlistUpdates"],
 							"query": [
 								{
 									"key": "sourceID",
@@ -124,12 +97,12 @@
 								},
 								{
 									"key": "hotlistname",
-									"value": "{{hotlist_name}}",
-									"description": "Name of the hotlist to get updates for"
+									"value": "{{hotlist_group_name}}",
+									"description": "Name of the hotlist group to get updates for"
 								}
 							]
 						},
-						"description": "Gets hotlist updates as a ZIP file containing CSV data with changes since the device's last known revision."
+						"description": "Gets hotlist updates as a ZIP file containing CSV data with all vehicles in the hotlist group."
 					},
 					"response": []
 				},
@@ -139,16 +112,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistUpdatesRestrictSize?sourceID={{source_id}}&hotlistname={{hotlist_name}}&maxsize={{max_size}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"UpdateHotlistsService",
-								"getHotlistUpdatesRestrictSize"
-							],
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getHotlistUpdatesRestrictSize?sourceID={{source_id}}&hotlistname={{hotlist_group_name}}&maxsize={{max_size}}",
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "UpdateHotlistsService", "getHotlistUpdatesRestrictSize"],
 							"query": [
 								{
 									"key": "sourceID",
@@ -157,8 +123,8 @@
 								},
 								{
 									"key": "hotlistname",
-									"value": "{{hotlist_name}}",
-									"description": "Name of the hotlist to get updates for"
+									"value": "{{hotlist_group_name}}",
+									"description": "Name of the hotlist group to get updates for"
 								},
 								{
 									"key": "maxsize",
@@ -177,16 +143,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getMultipleHotlistUpdates?sourceid={{source_id}}&hotlistnames={{hotlist_names}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"UpdateHotlistsService",
-								"getMultipleHotlistUpdates"
-							],
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getMultipleHotlistUpdates?sourceid={{source_id}}&hotlistnames={{hotlist_group_names}}",
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "UpdateHotlistsService", "getMultipleHotlistUpdates"],
 							"query": [
 								{
 									"key": "sourceid",
@@ -195,12 +154,12 @@
 								},
 								{
 									"key": "hotlistnames",
-									"value": "{{hotlist_names}}",
-									"description": "Comma-separated list of hotlist names"
+									"value": "{{hotlist_group_names}}",
+									"description": "Comma-separated list of hotlist group names"
 								}
 							]
 						},
-						"description": "Gets updates for multiple hotlists in a single request."
+						"description": "Gets updates for multiple hotlist groups in a single request."
 					},
 					"response": []
 				},
@@ -210,16 +169,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getMultipleHotlistUpdatesRestrictSize?sourceid={{source_id}}&hotlistnames={{hotlist_names}}&maxsize={{max_size}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"UpdateHotlistsService",
-								"getMultipleHotlistUpdatesRestrictSize"
-							],
+							"raw": "{{base_url}}/bof/services/UpdateHotlistsService/getMultipleHotlistUpdatesRestrictSize?sourceid={{source_id}}&hotlistnames={{hotlist_group_names}}&maxsize={{max_size}}",
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "UpdateHotlistsService", "getMultipleHotlistUpdatesRestrictSize"],
 							"query": [
 								{
 									"key": "sourceid",
@@ -228,8 +180,8 @@
 								},
 								{
 									"key": "hotlistnames",
-									"value": "{{hotlist_names}}",
-									"description": "Comma-separated list of hotlist names"
+									"value": "{{hotlist_group_names}}",
+									"description": "Comma-separated list of hotlist group names"
 								},
 								{
 									"key": "maxsize",
@@ -238,12 +190,12 @@
 								}
 							]
 						},
-						"description": "Gets updates for multiple hotlists with size restrictions."
+						"description": "Gets updates for multiple hotlist groups with size restrictions."
 					},
 					"response": []
 				}
 			],
-			"description": "BOF (Back Office Facility) hotlist synchronization endpoints according to SDR-143 specification"
+			"description": "BOF (Back Office Facility) hotlist synchronization endpoints according to SDR-143 specification with group-level synchronization"
 		},
 		{
 			"name": "BOF Capture Services",
@@ -260,21 +212,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"vrm\": \"{{license_plate}}\",\n    \"feedID\": 1,\n    \"sourceID\": 1,\n    \"cameraID\": 1,\n    \"plateImage\": null,\n    \"overviewImage\": null,\n    \"captureDate\": \"2023-01-01T12:00:00Z\",\n    \"latitude\": 51.5074,\n    \"longitude\": -0.1278,\n    \"cameraPresetPosition\": 1,\n    \"cameraPan\": \"0\",\n    \"cameraTilt\": \"0\",\n    \"cameraZoom\": \"1x\",\n    \"confidencePercentage\": 95,\n    \"motionTowardCamera\": true\n}"
+							"raw": "{\n    \"vrm\": \"{{license_plate}}\",\n    \"feedID\": 1,\n    \"sourceID\": 1,\n    \"cameraID\": 1,\n    \"plateImage\": \"base64_encoded_plate_image\",\n    \"overviewImage\": \"base64_encoded_overview_image\",\n    \"captureDate\": \"2024-01-01T12:00:00Z\",\n    \"latitude\": 51.5074,\n    \"longitude\": -0.1278,\n    \"cameraPresetPosition\": 1,\n    \"cameraPan\": \"0\",\n    \"cameraTilt\": \"0\",\n    \"cameraZoom\": \"1x\",\n    \"confidencePercentage\": 95,\n    \"motionTowardCamera\": true\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bof/services/InputCaptureWebService/sendCapture",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"InputCaptureWebService",
-								"sendCapture"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "InputCaptureWebService", "sendCapture"]
 						},
-						"description": "BOF: Sends a complete capture record to BOF2 system."
+						"description": "BOF: Sends a complete capture record with image data to the ANPR system."
 					},
 					"response": []
 				},
@@ -290,19 +235,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"capture\": \"signature | username | {{license_plate}} | 1 | 1 | 1 | 2023-01-01T12:00:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 95 | true\"\n}"
+							"raw": "{\n    \"capture\": \"signature | admin | {{license_plate}} | 1 | 1 | 1 | 2024-01-01T12:00:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 95 | true\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bof/services/InputCaptureWebService/sendCompactCapture",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"InputCaptureWebService",
-								"sendCompactCapture"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "InputCaptureWebService", "sendCompactCapture"]
 						},
 						"description": "BOF: Sends a compact (pipe-delimited) capture record for bandwidth efficiency."
 					},
@@ -320,62 +258,25 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"captures\": [\n        \"signature | username | {{license_plate}} | 1 | 1 | 1 | 2023-01-01T12:00:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 95 | true\",\n        \"signature | username | ABC456 | 1 | 1 | 2 | 2023-01-01T12:01:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 92 | false\"\n    ]\n}"
+							"raw": "{\n    \"captures\": [\n        \"signature | admin | {{license_plate}} | 1 | 1 | 1 | 2024-01-01T12:00:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 95 | true\",\n        \"signature | admin | ABC456 | 1 | 1 | 2 | 2024-01-01T12:01:00Z | 51.5074 | -0.1278 | 1 | 0 | 0 | 1x | 92 | false\"\n    ]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bof/services/InputCaptureWebService/sendCompoundCapture",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"InputCaptureWebService",
-								"sendCompoundCapture"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["bof", "services", "InputCaptureWebService", "sendCompoundCapture"]
 						},
 						"description": "BOF: Sends multiple capture records in a single request (max 50)."
 					},
 					"response": []
-				},
-				{
-					"name": "Add Binary Capture Data (BOF)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"signature\": \"signature\",\n    \"username\": \"admin\",\n    \"vrm\": \"{{license_plate}}\",\n    \"feedIdentifier\": 1,\n    \"sourceIdentifier\": 1,\n    \"cameraIdentifier\": 1,\n    \"captureTime\": \"2023-01-01T12:00:00Z\",\n    \"binaryImage\": \"base64_encoded_image_data\",\n    \"binaryDataType\": \"P\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/bof/services/InputBinaryDataWebService/addBinaryCaptureData",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"bof",
-								"services",
-								"InputBinaryDataWebService",
-								"addBinaryCaptureData"
-							]
-						},
-						"description": "BOF: Adds binary image data to a previously sent capture record."
-					},
-					"response": []
 				}
 			],
-			"description": "BOF (Back Office Facility) capture input endpoints according to SDR-143 specification. NOTE: These endpoints are not yet implemented - they show the expected BOF protocol format."
+			"description": "BOF (Back Office Facility) capture input endpoints for receiving ANPR read data"
 		},
 		{
-			"name": "Hotlist Management API",
+			"name": "Hotlist Group Management",
 			"item": [
 				{
-					"name": "Create Hotlist Entry",
+					"name": "Create Hotlist Group",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -386,36 +287,26 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"license_plate\": \"TEST123\",\n    \"description\": \"Test hotlist entry for stolen vehicle\",\n    \"category\": \"stolen\",\n    \"priority\": \"high\",\n    \"created_by\": \"admin\",\n    \"vehicle_make\": \"Toyota\",\n    \"vehicle_model\": \"Camry\",\n    \"vehicle_color\": \"Blue\",\n    \"vehicle_year\": 2020,\n    \"owner_name\": \"John Doe\",\n    \"notes\": \"Stolen from parking lot\"\n}"
+							"raw": "{\n    \"name\": \"StolenVehicles2024\",\n    \"description\": \"Stolen vehicles hotlist for 2024\",\n    \"category\": \"stolen\",\n    \"priority\": \"high\",\n    \"created_by\": \"admin\",\n    \"is_active\": true,\n    \"expiry_date\": null,\n    \"vehicles\": [\n        {\n            \"license_plate\": \"AB12 CDE\",\n            \"vehicle_make\": \"Ford\",\n            \"vehicle_model\": \"Focus\",\n            \"vehicle_color\": \"Blue\",\n            \"fuel_type\": \"Petrol\",\n            \"body_type\": \"Hatchback\",\n            \"vin_number\": \"1FTFW1ET5DFC12345\",\n            \"date_of_first_registration\": \"2020-06-15\",\n            \"warning_markers\": \"Theft\",\n            \"nim_codes\": \"TH001\",\n            \"force_area\": \"Metropolitan Police\",\n            \"pnc_id\": \"12345678\",\n            \"gpms_marking\": \"urgent\",\n            \"operational_instructions\": \"Approach with caution\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/hotlists",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"hotlists"
-							]
+							"raw": "{{base_url}}/api/hotlist-groups",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hotlist-groups"]
 						},
-						"description": "Creates a new hotlist entry with vehicle information."
+						"description": "Creates a new hotlist group with multiple vehicles. Supports UK ANPR Regulation 109 compliant fields."
 					},
 					"response": []
 				},
 				{
-					"name": "Get All Hotlists",
+					"name": "Get All Hotlist Groups",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/hotlists?skip=0&limit=50",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"hotlists"
-							],
+							"raw": "{{base_url}}/api/hotlist-groups?skip=0&limit=50",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hotlist-groups"],
 							"query": [
 								{
 									"key": "skip",
@@ -429,32 +320,26 @@
 								}
 							]
 						},
-						"description": "Retrieves all hotlist entries with pagination support."
+						"description": "Retrieves all hotlist groups with their vehicle counts and metadata."
 					},
 					"response": []
 				},
 				{
-					"name": "Get Hotlist by ID",
+					"name": "Get Hotlist Group by ID",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/hotlists/{{hotlist_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"hotlists",
-								"{{hotlist_id}}"
-							]
+							"raw": "{{base_url}}/api/hotlist-groups/{{hotlist_group_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hotlist-groups", "{{hotlist_group_id}}"]
 						},
-						"description": "Retrieves a specific hotlist entry by ID."
+						"description": "Retrieves a specific hotlist group with all its vehicles."
 					},
 					"response": []
 				},
 				{
-					"name": "Update Hotlist Entry",
+					"name": "Update Hotlist Group",
 					"request": {
 						"method": "PUT",
 						"header": [
@@ -465,72 +350,86 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"description\": \"Updated description for stolen vehicle\",\n    \"priority\": \"critical\",\n    \"notes\": \"Updated notes - vehicle spotted in downtown area\"\n}"
+							"raw": "{\n    \"description\": \"Updated description for stolen vehicles hotlist\",\n    \"priority\": \"critical\",\n    \"is_active\": true,\n    \"expiry_date\": \"2024-12-31T23:59:59Z\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/hotlists/{{hotlist_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"hotlists",
-								"{{hotlist_id}}"
-							]
+							"raw": "{{base_url}}/api/hotlist-groups/{{hotlist_group_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hotlist-groups", "{{hotlist_group_id}}"]
 						},
-						"description": "Updates an existing hotlist entry."
+						"description": "Updates an existing hotlist group's metadata."
 					},
 					"response": []
 				},
 				{
-					"name": "Delete Hotlist Entry",
+					"name": "Delete Hotlist Group",
 					"request": {
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/hotlists/{{hotlist_id}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"hotlists",
-								"{{hotlist_id}}"
-							]
+							"raw": "{{base_url}}/api/hotlist-groups/{{hotlist_group_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hotlist-groups", "{{hotlist_group_id}}"]
 						},
-						"description": "Deletes a hotlist entry by ID."
+						"description": "Deletes a hotlist group and all its associated vehicles."
 					},
 					"response": []
 				},
 				{
-					"name": "Search Hotlists",
+					"name": "Upload CSV to Hotlist Group",
 					"request": {
-						"method": "GET",
+						"method": "POST",
 						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/hotlists/search?license_plate={{license_plate}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"hotlists",
-								"search"
-							],
-							"query": [
+						"body": {
+							"mode": "formdata",
+							"formdata": [
 								{
-									"key": "license_plate",
-									"value": "{{license_plate}}",
-									"description": "License plate to search for"
+									"key": "file",
+									"type": "file",
+									"src": "/path/to/vehicles.csv"
 								}
 							]
 						},
-						"description": "Searches for hotlist entries by license plate."
+						"url": {
+							"raw": "{{base_url}}/api/hotlist-groups/{{hotlist_group_id}}/upload-csv",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hotlist-groups", "{{hotlist_group_id}}", "upload-csv"]
+						},
+						"description": "Uploads a CSV file of vehicles to a hotlist group. Supports automatic header detection and flexible field mapping."
 					},
 					"response": []
 				}
 			],
-			"description": "Standard REST API endpoints for hotlist management"
+			"description": "Hotlist group management with enhanced vehicle data and CSV upload capabilities"
+		},
+		{
+			"name": "Individual Vehicle Management",
+			"item": [
+				{
+					"name": "Add Vehicle to Group",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hotlist_group_id\": {{hotlist_group_id}},\n    \"license_plate\": \"XY99 ZZZ\",\n    \"vehicle_make\": \"BMW\",\n    \"vehicle_model\": \"X5\",\n    \"vehicle_color\": \"Black\",\n    \"fuel_type\": \"Diesel\",\n    \"body_type\": \"SUV\",\n    \"vin_number\": \"WBAFR7C50BC123456\",\n    \"engine_number\": \"N57D30B\",\n    \"date_of_first_registration\": \"2021-03-10\",\n    \"date_of_last_registration\": \"2023-01-15\",\n    \"warning_markers\": \"Export\",\n    \"nim_codes\": \"EX002\",\n    \"force_area\": \"West Midlands Police\",\n    \"weed_date\": \"2024-06-30\",\n    \"pnc_id\": \"87654321\",\n    \"gpms_marking\": \"standard\",\n    \"cad_information\": \"Related to fraud case #12345\",\n    \"theft_marker\": false,\n    \"scrap_marker\": false,\n    \"export_marker\": true,\n    \"intelligence_information\": \"Vehicle suspected in export fraud\",\n    \"operational_instructions\": \"Contact CID if found\",\n    \"source_reference\": \"Op_Phoenix_2024\",\n    \"authorizing_officer\": \"DI Smith\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles",
+							"host": ["{{base_url}}"],
+							"path": ["api", "vehicles"]
+						},
+						"description": "Adds a single vehicle to an existing hotlist group with full ANPR compliance fields."
+					},
+					"response": []
+				}
+			],
+			"description": "Individual vehicle management within hotlist groups"
 		},
 		{
 			"name": "ANPR Reads API",
@@ -547,17 +446,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"license_plate\": \"ABC123\",\n    \"confidence\": 95,\n    \"camera_id\": \"CAM001\",\n    \"location\": \"Main Street & 1st Ave\",\n    \"direction\": \"northbound\",\n    \"speed\": 50,\n    \"lane\": 1\n}"
+							"raw": "{\n    \"license_plate\": \"{{license_plate}}\",\n    \"confidence\": 95,\n    \"camera_id\": \"{{camera_id}}\",\n    \"location\": \"Main Street & 1st Ave\",\n    \"direction\": \"northbound\",\n    \"speed\": 50,\n    \"lane\": 1\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/anpr/reads",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"anpr",
-								"reads"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["anpr", "reads"]
 						},
 						"description": "Submits a new ANPR read from a camera system."
 					},
@@ -573,12 +467,12 @@
 							"formdata": [
 								{
 									"key": "license_plate",
-									"value": "ABC123",
+									"value": "{{license_plate}}",
 									"type": "text"
 								},
 								{
 									"key": "camera_id",
-									"value": "CAM001",
+									"value": "{{camera_id}}",
 									"type": "text"
 								},
 								{
@@ -620,14 +514,8 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/anpr/reads/with-images",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"anpr",
-								"reads",
-								"with-images"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["anpr", "reads", "with-images"]
 						},
 						"description": "Submits a new ANPR read with plate and context images."
 					},
@@ -640,13 +528,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/anpr/reads?skip=0&limit=50",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"anpr",
-								"reads"
-							],
+							"host": ["{{base_url}}"],
+							"path": ["anpr", "reads"],
 							"query": [
 								{
 									"key": "skip",
@@ -661,16 +544,32 @@
 								{
 									"key": "hotlist_only",
 									"value": "false",
-									"description": "Filter to only hotlist matches"
+									"description": "Filter to only hotlist matches",
+									"disabled": true
 								},
 								{
 									"key": "search",
 									"value": "",
-									"description": "Search term for license plate, camera ID, or location"
+									"description": "Search term for license plate, camera ID, or location",
+									"disabled": true
 								}
 							]
 						},
 						"description": "Retrieves all ANPR reads with pagination and filtering support."
+					},
+					"response": []
+				},
+				{
+					"name": "Get ANPR Read by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/anpr/reads/{{read_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["anpr", "reads", "{{read_id}}"]
+						},
+						"description": "Retrieves a specific ANPR read by ID."
 					},
 					"response": []
 				},
@@ -681,13 +580,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/anpr/reads?hotlist_only=true&limit=50",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"anpr",
-								"reads"
-							],
+							"host": ["{{base_url}}"],
+							"path": ["anpr", "reads"],
 							"query": [
 								{
 									"key": "hotlist_only",
@@ -712,13 +606,8 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/anpr/reads?search={{license_plate}}",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"anpr",
-								"reads"
-							],
+							"host": ["{{base_url}}"],
+							"path": ["anpr", "reads"],
 							"query": [
 								{
 									"key": "search",
@@ -732,7 +621,69 @@
 					"response": []
 				}
 			],
-			"description": "ANPR read submission and retrieval endpoints"
+			"description": "ANPR read submission and retrieval endpoints with hotlist matching"
+		},
+		{
+			"name": "System APIs",
+			"item": [
+				{
+					"name": "Get System Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "stats"]
+						},
+						"description": "Retrieves system statistics including read counts, hotlist groups, and recent activity."
+					},
+					"response": []
+				},
+				{
+					"name": "Check ANPR Connectivity",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/anpr/connectivity",
+							"host": ["{{base_url}}"],
+							"path": ["anpr", "connectivity"]
+						},
+						"description": "Checks system connectivity and health status."
+					},
+					"response": []
+				},
+				{
+					"name": "Get API Documentation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/docs",
+							"host": ["{{base_url}}"],
+							"path": ["docs"]
+						},
+						"description": "Access the interactive API documentation (Swagger UI)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get OpenAPI Schema",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/openapi.json",
+							"host": ["{{base_url}}"],
+							"path": ["openapi.json"]
+						},
+						"description": "Retrieves the OpenAPI schema for the ANPR system."
+					},
+					"response": []
+				}
+			],
+			"description": "System monitoring and documentation endpoints"
 		},
 		{
 			"name": "Web Interface",
@@ -744,32 +695,24 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								""
-							]
+							"host": ["{{base_url}}"],
+							"path": [""]
 						},
-						"description": "Main dashboard web interface."
+						"description": "Main dashboard web interface with system overview."
 					},
 					"response": []
 				},
 				{
-					"name": "Hotlists Page",
+					"name": "Hotlists Management Page",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/hotlists",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"hotlists"
-							]
+							"host": ["{{base_url}}"],
+							"path": ["hotlists"]
 						},
-						"description": "Hotlist management web interface."
+						"description": "Enhanced hotlist management web interface with grid-based vehicle entry and CSV upload."
 					},
 					"response": []
 				},
@@ -779,21 +722,16 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/anpr/reads",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"anpr",
-								"reads"
-							]
+							"raw": "{{base_url}}/anpr-reads",
+							"host": ["{{base_url}}"],
+							"path": ["anpr-reads"]
 						},
-						"description": "ANPR reads viewing web interface."
+						"description": "ANPR reads viewing web interface with hotlist match highlighting."
 					},
 					"response": []
 				}
 			],
-			"description": "Web interface endpoints for browser access"
+			"description": "Web interface endpoints for browser access with enhanced UI"
 		}
 	],
 	"variable": [
@@ -816,28 +754,28 @@
 			"description": "Current revision number"
 		},
 		{
-			"key": "hotlist_name",
-			"value": "hotlist_TEST123",
+			"key": "hotlist_group_name",
+			"value": "StolenVehicles2024",
 			"type": "string",
-			"description": "Example hotlist name"
+			"description": "Example hotlist group name"
 		},
 		{
-			"key": "hotlist_names",
-			"value": "hotlist_TEST123,hotlist_ABC456",
+			"key": "hotlist_group_names",
+			"value": "StolenVehicles2024,WantedVehicles2024",
 			"type": "string",
-			"description": "Comma-separated list of hotlist names"
+			"description": "Comma-separated list of hotlist group names"
+		},
+		{
+			"key": "hotlist_group_id",
+			"value": "1",
+			"type": "string",
+			"description": "Hotlist group ID"
 		},
 		{
 			"key": "max_size",
 			"value": "1048576",
 			"type": "string",
 			"description": "Maximum size in bytes (1MB)"
-		},
-		{
-			"key": "hotlist_id",
-			"value": "1",
-			"type": "string",
-			"description": "Hotlist entry ID"
 		},
 		{
 			"key": "read_id",
@@ -847,7 +785,7 @@
 		},
 		{
 			"key": "license_plate",
-			"value": "TEST123",
+			"value": "AB12 CDE",
 			"type": "string",
 			"description": "License plate number for testing"
 		},

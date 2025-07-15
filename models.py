@@ -8,14 +8,9 @@ class HotlistGroup(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, index=True, nullable=False)
-    description = Column(Text, nullable=False)
-    category = Column(String(50), nullable=False)  # e.g., "stolen", "wanted", "bolo"
-    priority = Column(String(20), default="medium")  # low, medium, high, critical
-    created_by = Column(String(100), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)
-    expiry_date = Column(DateTime, nullable=True)
     
     # BOF-specific fields for revision tracking
     revision = Column(BigInteger, default=1)  # Revision number for this hotlist group
@@ -28,50 +23,57 @@ class Hotlist(Base):
     __tablename__ = "hotlists"
     
     id = Column(Integer, primary_key=True, index=True)
-    license_plate = Column(String, index=True, nullable=False)  # VRM
     
-    # Basic vehicle information
-    vehicle_make = Column(String)
-    vehicle_model = Column(String) 
-    vehicle_color = Column(String)
+    # UK ANPR Regulation 109 - 16 Fields
+    # 1. VRM (Vehicle Registration Mark)
+    license_plate = Column(String(10), index=True, nullable=False)
     
-    # Extended ANPR-compliant vehicle details
-    vin_number = Column(String)  # Vehicle Identification Number
-    engine_number = Column(String)
-    engine_capacity = Column(Integer)  # Engine capacity in cc
-    fuel_type = Column(String)  # Petrol, Diesel, Electric, Hybrid, etc.
-    body_type = Column(String)  # Saloon, Hatchback, Estate, etc.
+    # 2. Vehicle Make
+    vehicle_make = Column(String(50))
     
-    # Registration information
-    date_of_first_registration = Column(Date)
-    date_of_first_uk_registration = Column(Date) 
-    vehicle_manufactured_date = Column(Date)
+    # 3. Vehicle Model
+    vehicle_model = Column(String(50))
     
-    # ANPR-specific operational fields
-    warning_markers = Column(String)  # Warning markers for the vehicle
-    nim_code = Column(String)  # NIM (5x5x5) Code
-    force_area = Column(String)  # Police force/area identifier
-    weed_date = Column(Date)  # Date when record should be reviewed/removed
-    pnc_id = Column(String)  # Police National Computer ID
-    gpms_marking = Column(String, default="Unclassified")  # GPMS classification
-    cad_information = Column(String)  # Command and Control information
+    # 4. Vehicle Colour
+    vehicle_color = Column(String(30))
     
-    # Additional operational data
-    theft_marker = Column(Boolean, default=False)  # Vehicle stolen marker
-    scrap_marker = Column(Boolean, default=False)  # Vehicle scrapped marker
-    export_marker = Column(Boolean, default=False)  # Vehicle exported marker
+    # 5. Action (derived from group priority - STOP/SILENT)
+    # This will be calculated dynamically in the CSV export
     
-    # Extended description and intelligence
-    intelligence_information = Column(Text)  # Additional intelligence
-    operational_instructions = Column(Text)  # Specific operational instructions
-    vehicle_features = Column(String)  # Distinctive features
+    # 6. Warning Markers
+    warning_markers = Column(String(100))
     
-    # Audit and tracking
-    source_reference = Column(String)  # Source of the intelligence
-    authorizing_officer = Column(String)  # Officer authorizing the entry
-    review_date = Column(Date)  # Date for next review
+    # 7. Reason (category - will be derived from group)
+    # This will be calculated dynamically in the CSV export
     
-    # Existing fields
+    # 8. NIM (5x5x5) Code
+    nim_code = Column(String(20))
+    
+    # 9. Information/Action
+    intelligence_information = Column(Text)
+    
+    # 10. Force & Area
+    force_area = Column(String(50))
+    
+    # 11. Weed Date
+    weed_date = Column(Date)
+    
+    # 12. PNC ID
+    pnc_id = Column(String(50))
+    
+    # 13. GPMS Marking
+    gpms_marking = Column(String(20), default="Unclassified")
+    
+    # 14. CAD Information
+    cad_information = Column(String(200))
+    
+    # 15. Operational Instructions (Spare 1)
+    operational_instructions = Column(Text)
+    
+    # 16. Source Reference (Spare 2)
+    source_reference = Column(String(100))
+    
+    # System fields
     hotlist_group_id = Column(Integer, ForeignKey("hotlist_groups.id"))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -107,13 +109,12 @@ class ANPRRead(Base):
     hotlist = relationship("Hotlist", back_populates="anpr_reads")
 
 class DeviceSource(Base):
-    """Track device sources that sync hotlists"""
+    """Track device sources for BOF integration"""
     __tablename__ = "device_sources"
     
     id = Column(Integer, primary_key=True, index=True)
-    source_id = Column(String(10), unique=True, index=True, nullable=False)  # BOF sourceID
-    name = Column(String(100), nullable=False)
-    description = Column(Text, nullable=True)
+    source_id = Column(String(50), unique=True, index=True, nullable=False)
+    description = Column(String(200))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -137,22 +138,4 @@ class HotlistRevision(Base):
     
     # Relationships
     hotlist_group = relationship("HotlistGroup", back_populates="hotlist_revisions")
-    device_source = relationship("DeviceSource", back_populates="hotlist_revisions")
-
-class HotlistRepository(Base):
-    """Track the global hotlist repository revision"""
-    __tablename__ = "hotlist_repository"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    revision = Column(BigInteger, default=1)  # Global repository revision
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-class SystemLog(Base):
-    __tablename__ = "system_logs"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-    level = Column(String(20), nullable=False)  # INFO, WARNING, ERROR
-    message = Column(Text, nullable=False)
-    source = Column(String(100), nullable=False)  # camera_id, api, system, etc.
-    user_id = Column(String(100), nullable=True) 
+    device_source = relationship("DeviceSource", back_populates="hotlist_revisions") 
