@@ -126,17 +126,20 @@ def generate_hotlist_csv_data(hotlists: List[Hotlist]) -> str:
     writer = csv.writer(output)
     
     for hotlist in hotlists:
+        # Get group-level information from the hotlist group
+        group = hotlist.hotlist_group
+        
         # BOF 16-column format
         row = [
             hotlist.license_plate,           # VRM
             hotlist.vehicle_make or "",      # Vehicle Make
             hotlist.vehicle_model or "",     # Vehicle Model
             hotlist.vehicle_color or "",     # Vehicle Colour
-            "STOP" if hotlist.priority == "high" else "SILENT",  # Action
+            "STOP" if group.priority == "high" else "SILENT",  # Action (from group)
             "",                              # Warning Markers
-            hotlist.category.upper(),        # Reason
+            group.category.upper(),          # Reason (from group)
             "",                              # NIM (5x5x5) Code
-            hotlist.description,             # Information/Action
+            group.description,               # Information/Action (from group)
             "",                              # Force & Area
             "",                              # Weed Date
             "",                              # PNC ID
@@ -567,29 +570,29 @@ async def get_hotlist_status(
 ) -> List[BofHotlistRevisions]:
     """
     BOF: Get hotlist status for a specific source
-    Returns array of BofHotlistRevisions for all hotlists allocated to this source
+    Returns array of BofHotlistRevisions for all hotlist groups allocated to this source
     """
     # Get or create the device source
     device_source = get_or_create_device_source(db, sourceID)
     
-    # Get all active hotlists
-    hotlists = db.query(Hotlist).filter(Hotlist.is_active == True).all()
+    # Get all active hotlist groups
+    hotlist_groups = db.query(HotlistGroup).filter(HotlistGroup.is_active == True).all()
     
     result = []
-    for hotlist in hotlists:
-        # Create hotlist name from license plate for simplicity
-        hotlist_name = f"hotlist_{hotlist.license_plate}"
+    for group in hotlist_groups:
+        # Use the actual group name for hotlist sync
+        hotlist_name = group.name
         
-        # Get or create revision tracking
-        revision = get_or_create_hotlist_revision(db, hotlist.hotlist_group_id, device_source.id, hotlist_name)
+        # Get or create revision tracking for this group
+        revision = get_or_create_hotlist_revision(db, group.id, device_source.id, hotlist_name)
         
-        # Update latest revision from hotlist
-        revision.latest_revision = hotlist.revision
+        # Update latest revision from group
+        revision.latest_revision = group.revision
         db.commit()
         
         result.append(BofHotlistRevisions(
             hotlist_name=hotlist_name,
-            latest_revision=hotlist.revision,
+            latest_revision=group.revision,
             external_system_revision=revision.external_system_revision,
             is_allocated=revision.is_allocated
         ))
@@ -604,25 +607,26 @@ async def set_hotlist_status(
 ):
     """
     BOF: Set hotlist status for a specific source
-    Updates the external system revision for each hotlist
+    Updates the external system revision for each hotlist group
     """
     # Get or create the device source
     device_source = get_or_create_device_source(db, sourceID)
     
     for hotlist_revision in hotlistsAndRevisions:
-        # Find the hotlist by name (extract license plate from name)
+        # The hotlist name is now the actual group name
         hotlist_name = hotlist_revision.hotlist_name
-        license_plate = hotlist_name.replace("hotlist_", "")
         
-        hotlist = db.query(Hotlist).filter(Hotlist.license_plate == license_plate).first()
-        if hotlist:
-            # Update the revision tracking
-            revision = get_or_create_hotlist_revision(db, hotlist.id, device_source.id, hotlist_name)
+        # Find the hotlist group by name
+        hotlist_group = db.query(HotlistGroup).filter(HotlistGroup.name == hotlist_name).first()
+        if hotlist_group:
+            # Update the revision tracking for this group
+            revision = get_or_create_hotlist_revision(db, hotlist_group.id, device_source.id, hotlist_name)
             revision.external_system_revision = hotlist_revision.current_revision
             db.commit()
     
     return {"status": "success"}
 
+# BOF Hotlist Updates Endpoints
 @app.get("/bof/services/UpdateHotlistsService/getHotlistUpdates")
 async def get_hotlist_updates(
     sourceID: str,
@@ -630,25 +634,28 @@ async def get_hotlist_updates(
     db: Session = Depends(get_db)
 ) -> BofHotlistData:
     """
-    BOF: Get hotlist updates for a specific hotlist
-    Returns BofHotlistData with ZIP file containing updates
+    BOF: Get hotlist updates for a specific hotlist group
+    Returns BofHotlistData with ZIP file containing all vehicles in the group
     """
-    # Extract license plate from hotlist name
-    license_plate = hotlistname.replace("hotlist_", "")
-    
-    # Get the hotlist
-    hotlist = db.query(Hotlist).filter(Hotlist.license_plate == license_plate).first()
-    if not hotlist:
-        raise HTTPException(status_code=404, detail="Hotlist not found")
+    # Find the hotlist group by name
+    hotlist_group = db.query(HotlistGroup).filter(HotlistGroup.name == hotlistname).first()
+    if not hotlist_group:
+        raise HTTPException(status_code=404, detail="Hotlist group not found")
     
     # Get device source
     device_source = get_or_create_device_source(db, sourceID)
     
-    # Get or create revision tracking
-    revision = get_or_create_hotlist_revision(db, hotlist.id, device_source.id, hotlistname)
+    # Get or create revision tracking for this group
+    revision = get_or_create_hotlist_revision(db, hotlist_group.id, device_source.id, hotlistname)
     
-    # Generate CSV data for the hotlist
-    csv_data = generate_hotlist_csv_data([hotlist])
+    # Get all active vehicles in this group
+    vehicles = db.query(Hotlist).filter(
+        Hotlist.hotlist_group_id == hotlist_group.id,
+        Hotlist.is_active == True
+    ).all()
+    
+    # Generate CSV data for all vehicles in the group
+    csv_data = generate_hotlist_csv_data(vehicles)
     
     # Create ZIP file with hotlist data
     zip_data = create_hotlist_zip(hotlistname, sourceID, csv_data)
@@ -658,7 +665,7 @@ async def get_hotlist_updates(
     
     return BofHotlistData(
         hotlist_name=hotlistname,
-        latest_revision=hotlist.revision,
+        latest_revision=hotlist_group.revision,
         hotlist_deltas=zip_data_b64,
         is_file_too_big=False
     )
@@ -671,25 +678,28 @@ async def get_hotlist_updates_restrict_size(
     db: Session = Depends(get_db)
 ) -> BofHotlistData:
     """
-    BOF: Get hotlist updates with size restriction
+    BOF: Get hotlist updates with size restriction for a specific hotlist group
     Returns BofHotlistData with ZIP file containing updates or too_big flag
     """
-    # Extract license plate from hotlist name
-    license_plate = hotlistname.replace("hotlist_", "")
-    
-    # Get the hotlist
-    hotlist = db.query(Hotlist).filter(Hotlist.license_plate == license_plate).first()
-    if not hotlist:
-        raise HTTPException(status_code=404, detail="Hotlist not found")
+    # Find the hotlist group by name
+    hotlist_group = db.query(HotlistGroup).filter(HotlistGroup.name == hotlistname).first()
+    if not hotlist_group:
+        raise HTTPException(status_code=404, detail="Hotlist group not found")
     
     # Get device source
     device_source = get_or_create_device_source(db, sourceID)
     
-    # Get or create revision tracking
-    revision = get_or_create_hotlist_revision(db, hotlist.id, device_source.id, hotlistname)
+    # Get or create revision tracking for this group
+    revision = get_or_create_hotlist_revision(db, hotlist_group.id, device_source.id, hotlistname)
     
-    # Generate CSV data for the hotlist
-    csv_data = generate_hotlist_csv_data([hotlist])
+    # Get all active vehicles in this group
+    vehicles = db.query(Hotlist).filter(
+        Hotlist.hotlist_group_id == hotlist_group.id,
+        Hotlist.is_active == True
+    ).all()
+    
+    # Generate CSV data for all vehicles in the group
+    csv_data = generate_hotlist_csv_data(vehicles)
     
     # Create ZIP file with hotlist data
     zip_data = create_hotlist_zip(hotlistname, sourceID, csv_data)
@@ -698,7 +708,7 @@ async def get_hotlist_updates_restrict_size(
     if len(zip_data) > size:
         return BofHotlistData(
             hotlist_name=hotlistname,
-            latest_revision=hotlist.revision,
+            latest_revision=hotlist_group.revision,
             hotlist_deltas=None,
             is_file_too_big=True
         )
@@ -708,7 +718,7 @@ async def get_hotlist_updates_restrict_size(
     
     return BofHotlistData(
         hotlist_name=hotlistname,
-        latest_revision=hotlist.revision,
+        latest_revision=hotlist_group.revision,
         hotlist_deltas=zip_data_b64,
         is_file_too_big=False
     )
