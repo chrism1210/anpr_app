@@ -1,277 +1,223 @@
 {% extends "base.html" %}
 
-{% block title %}Hotlists - ANPR System{% endblock %}
+{% block title %}Hotlist Management{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>
-                <i class="fas fa-list me-2"></i>
-                Vehicle Hotlists
-            </h1>
-            <div>
-                <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#csvUploadModal">
-                    <i class="fas fa-upload me-2"></i>
-                    Import CSV
-                </button>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hotlistGroupModal">
-                    <i class="fas fa-plus me-2"></i>
-                    Add Hotlist Group
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-list-alt me-2"></i>Hotlist Management</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#hotlistModal">
+                    <i class="fas fa-plus me-2"></i>Create New Hotlist Group
                 </button>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row mb-3">
-    <div class="col-md-6">
-        <div class="input-group">
-            <input type="text" class="form-control" id="searchInput" placeholder="Search license plates, descriptions, or categories...">
-            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <select class="form-select" id="categoryFilter">
-            <option value="">All Categories</option>
-            <option value="stolen">Stolen</option>
-            <option value="wanted">Wanted</option>
-            <option value="bolo">BOLO</option>
-            <option value="suspicious">Suspicious</option>
-        </select>
-    </div>
-    <div class="col-md-3">
-        <select class="form-select" id="statusFilter">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-        </select>
-    </div>
-</div>
+    <!-- Alert container -->
+    <div id="alertContainer"></div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Hotlist Name</th>
-                        <th>Category</th>
-                        <th>Priority</th>
-                        <th>Description</th>
-                        <th>Vehicles</th>
-                        <th>Created</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="hotlistsTable">
-                    <tr>
-                        <td colspan="8" class="text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- CSV Upload Modal -->
-<div class="modal fade" id="csvUploadModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Import Vehicles from CSV</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="csvHotlistSelect" class="form-label">Select Target Hotlist Group *</label>
-                    <select class="form-select" id="csvHotlistSelect" required>
-                        <option value="">Select a hotlist group...</option>
-                    </select>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="csvFile" class="form-label">Choose CSV File *</label>
-                    <input type="file" class="form-control" id="csvFile" accept=".csv" required>
-                    <div class="form-text">
-                        Supported formats: CSV files with or without headers. 
-                        <a href="#" onclick="showCsvFormat()">View expected format</a>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="csvHasHeaders" checked>
-                        <label class="form-check-label" for="csvHasHeaders">
-                            File has headers (first row contains column names)
-                        </label>
-                    </div>
-                </div>
-
-                <div id="csvPreview" class="d-none">
-                    <h6>Preview (first 5 rows):</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered" id="csvPreviewTable">
-                        </table>
-                    </div>
-                    
-                    <div id="columnMapping" class="mt-3">
-                        <h6>Column Mapping:</h6>
-                        <div class="row" id="columnMappingContainer">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Active Groups</h5>
+                            <h3 id="totalGroupsCount">-</h3>
                         </div>
+                        <i class="fas fa-folder-open fa-2x opacity-50"></i>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="importCsvBtn" disabled>Import Vehicles</button>
-            </div>
         </div>
-    </div>
-</div>
-
-<!-- CSV Format Help Modal -->
-<div class="modal fade" id="csvFormatModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">CSV Format Guide</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <h6>Supported Column Headers:</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Column Name</th>
-                                <th>Required</th>
-                                <th>Description</th>
-                                <th>Example</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>license_plate</td><td class="text-danger">Yes</td><td>Vehicle registration</td><td>AB12 CDE</td></tr>
-                            <tr><td>vehicle_make</td><td>No</td><td>Vehicle manufacturer</td><td>Ford</td></tr>
-                            <tr><td>vehicle_model</td><td>No</td><td>Vehicle model</td><td>Focus</td></tr>
-                            <tr><td>vehicle_color</td><td>No</td><td>Vehicle color</td><td>Blue</td></tr>
-                            <tr><td>vin_number</td><td>No</td><td>Vehicle identification number</td><td>1HGBH41JXMN109186</td></tr>
-                            <tr><td>fuel_type</td><td>No</td><td>Fuel type</td><td>Petrol</td></tr>
-                            <tr><td>body_type</td><td>No</td><td>Body type</td><td>Saloon</td></tr>
-                            <tr><td>warning_markers</td><td>No</td><td>Warning markers</td><td>FIREARMS</td></tr>
-                            <tr><td>intelligence_information</td><td>No</td><td>Intelligence notes</td><td>Seen at incident</td></tr>
-                        </tbody>
-                    </table>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Vehicles</h5>
+                            <h3 id="totalVehiclesCount">-</h3>
+                        </div>
+                        <i class="fas fa-car fa-2x opacity-50"></i>
+                    </div>
                 </div>
-                
-                <h6 class="mt-3">Example CSV:</h6>
-                <pre class="bg-light p-3"><code>license_plate,vehicle_make,vehicle_model,vehicle_color,warning_markers
-AB12 CDE,Ford,Focus,Blue,FIREARMS
-XY98 ZAB,BMW,X5,Black,
-CD34 EFG,Toyota,Corolla,Red,VIOLENT</code></pre>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Last Updated</h5>
+                            <h6 id="lastUpdated">-</h6>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">CSV Export</h5>
+                            <button class="btn btn-light btn-sm" onclick="exportAllToCSV()">
+                                <i class="fas fa-download me-1"></i>Export All
+                            </button>
+                        </div>
+                        <i class="fas fa-file-csv fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UK ANPR Regulation 109 Reference Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-info-circle me-2"></i>UK ANPR Regulation 109 - Required Vehicle Fields
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Core Vehicle Information (4 fields)</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-1"></i><strong>VRM</strong> - Vehicle Registration Mark (Required)</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Vehicle Make</strong> - Manufacturer</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Vehicle Model</strong> - Model name</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Vehicle Colour</strong> - Primary color</li>
+                    </ul>
+                    
+                    <h6>Intelligence Fields (4 fields)</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Warning Markers</strong> - Safety warnings</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>NIM Code</strong> - 5x5x5 classification</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Intelligence Info</strong> - Action required</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Force & Area</strong> - Police force identifier</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>System & Reference Fields (4 fields)</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Weed Date</strong> - Review/removal date</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>PNC ID</strong> - Police National Computer ID</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>GPMS Marking</strong> - Classification level</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>CAD Information</strong> - Command & Control info</li>
+                    </ul>
+                    
+                    <h6>Operational Fields (4 fields)</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Operational Instructions</strong> - Specific instructions</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Source Reference</strong> - Intelligence source</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Action</strong> - Auto-calculated (SILENT)</li>
+                        <li><i class="fas fa-check text-success me-1"></i><strong>Reason</strong> - Auto-assigned from group</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hotlist Groups Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Hotlist Groups</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="hotlistsTable">
+                    <thead>
+                        <tr>
+                            <th>Group Name</th>
+                            <th>Vehicle Count</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Last Updated</th>
+                            <th>Revision</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hotlistsTableBody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Add/Edit Hotlist Group Modal -->
-<div class="modal fade" id="hotlistGroupModal" tabindex="-1">
+<!-- Create/Edit Hotlist Modal -->
+<div class="modal fade" id="hotlistModal" tabindex="-1" aria-labelledby="hotlistModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Add Hotlist Group</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="hotlistModalLabel">Create New Hotlist Group</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="hotlistGroupForm">
-                    <!-- Hotlist Group Information -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="hotlistName" class="form-label">Hotlist Name *</label>
-                                <input type="text" class="form-control" id="hotlistName" required>
+                <form id="hotlistForm">
+                    <!-- Simplified Hotlist Group Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="groupName" class="form-label">Group Name *</label>
+                            <input type="text" class="form-control" id="groupName" required 
+                                   placeholder="Enter hotlist group name">
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check" style="margin-top: 2rem;">
+                                <input type="checkbox" class="form-check-input" id="isActive" checked>
+                                <label class="form-check-label" for="isActive">
+                                    <strong>Active Group</strong>
+                                </label>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="category" class="form-label">Category *</label>
-                                <select class="form-select" id="category" required>
-                                    <option value="">Select Category</option>
-                                    <option value="stolen">Stolen</option>
-                                    <option value="wanted">Wanted</option>
-                                    <option value="bolo">BOLO</option>
-                                    <option value="suspicious">Suspicious</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="priority" class="form-label">Priority</label>
-                                <select class="form-select" id="priority">
-                                    <option value="low">Low</option>
-                                    <option value="medium" selected>Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="createdBy" class="form-label">Created By *</label>
-                                <input type="text" class="form-control" id="createdBy" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description *</label>
-                        <textarea class="form-control" id="description" rows="3" required></textarea>
                     </div>
                     
                     <hr>
                     
-                    <!-- Streamlined Vehicle Grid Entry -->
+                    <!-- UK ANPR Regulation 109 Vehicle Grid -->
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6>Vehicles in this Hotlist</h6>
+                        <h6><i class="fas fa-car me-2"></i>Vehicles in this Hotlist (UK ANPR Regulation 109 - 16 Fields)</h6>
                         <div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="toggleAdvancedFields">
-                                <i class="fas fa-cog me-1"></i>
-                                Advanced Fields
-                            </button>
                             <button type="button" class="btn btn-sm btn-success" id="addVehicleBtn">
-                                <i class="fas fa-plus me-1"></i>
-                                Add Vehicle
+                                <i class="fas fa-plus me-1"></i>Add Vehicle
                             </button>
                         </div>
                     </div>
                     
-                    <!-- Vehicle Grid Table -->
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Vehicle Grid Table - All 16 fields visible -->
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
                         <table class="table table-sm table-bordered" id="vehicleGrid">
                             <thead class="table-light sticky-top">
                                 <tr>
-                                    <th style="width: 120px;">License Plate *</th>
+                                    <!-- Core Vehicle Info (4 fields) -->
+                                    <th style="width: 120px;">VRM * <small class="text-muted">(Reg Mark)</small></th>
                                     <th style="width: 100px;">Make</th>
                                     <th style="width: 100px;">Model</th>
-                                    <th style="width: 80px;">Color</th>
-                                    <th style="width: 100px;">Body Type</th>
-                                    <th style="width: 80px;">Fuel Type</th>
-                                    <!-- Advanced fields (initially hidden) -->
-                                    <th class="advanced-field d-none" style="width: 120px;">VIN</th>
-                                    <th class="advanced-field d-none" style="width: 100px;">Warning Markers</th>
-                                    <th class="advanced-field d-none" style="width: 150px;">Intelligence Info</th>
-                                    <th class="advanced-field d-none" style="width: 80px;">Force Area</th>
-                                    <th style="width: 50px;">Actions</th>
+                                    <th style="width: 80px;">Colour</th>
+                                    
+                                    <!-- Intelligence Fields (4 fields) -->
+                                    <th style="width: 120px;">Warning Markers</th>
+                                    <th style="width: 100px;">NIM Code <small class="text-muted">(5x5x5)</small></th>
+                                    <th style="width: 150px;">Intelligence Info</th>
+                                    <th style="width: 100px;">Force & Area</th>
+                                    
+                                    <!-- System Fields (4 fields) -->
+                                    <th style="width: 110px;">Weed Date</th>
+                                    <th style="width: 100px;">PNC ID</th>
+                                    <th style="width: 100px;">GPMS Marking</th>
+                                    <th style="width: 150px;">CAD Information</th>
+                                    
+                                    <!-- Operational Fields (4 fields) -->
+                                    <th style="width: 150px;">Operational Instructions</th>
+                                    <th style="width: 120px;">Source Reference</th>
+                                    
+                                    <th style="width: 60px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="vehicleGridBody">
@@ -280,222 +226,175 @@ CD34 EFG,Toyota,Corolla,Red,VIOLENT</code></pre>
                         </table>
                     </div>
                     
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="expiryDate" class="form-label">Expiry Date</label>
-                                <input type="datetime-local" class="form-control" id="expiryDate">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3 form-check" style="margin-top: 2rem;">
-                                <input type="checkbox" class="form-check-input" id="isActive" checked>
-                                <label class="form-check-label" for="isActive">
-                                    Active
-                                </label>
-                            </div>
-                        </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Action</strong> and <strong>Reason</strong> fields are automatically calculated during CSV export: 
+                            Action = "SILENT", Reason = Group Name
+                        </small>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveBtn">Save Hotlist Group</button>
+                <button type="button" class="btn btn-primary" id="saveHotlistBtn">
+                    <i class="fas fa-save me-1"></i>Save Hotlist Group
+                </button>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- CSV Upload Modal -->
+<div class="modal fade" id="csvUploadModal" tabindex="-1" aria-labelledby="csvUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="csvUploadModalLabel">Upload CSV File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="csvUploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="csvFile" class="form-label">Select CSV File</label>
+                        <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                        <div class="form-text">
+                            CSV must contain UK ANPR Regulation 109 compliant fields with 'license_plate' column.
+                        </div>
+                    </div>
+                    <input type="hidden" id="uploadHotlistId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="uploadCsvBtn">
+                    <i class="fas fa-upload me-1"></i>Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-let currentHotlistGroupId = null;
 let vehicleCounter = 0;
-let showAdvancedFields = false;
+let editingHotlistId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadHotlistGroups();
-    loadHotlistGroupsForCsv();
     
-    // Search functionality
-    document.getElementById('searchBtn').addEventListener('click', loadHotlistGroups);
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            loadHotlistGroups();
-        }
-    });
-    
-    // Filter functionality
-    document.getElementById('categoryFilter').addEventListener('change', loadHotlistGroups);
-    document.getElementById('statusFilter').addEventListener('change', loadHotlistGroups);
-    
-    // Form submission
-    document.getElementById('saveBtn').addEventListener('click', saveHotlistGroup);
-    
-    // Add vehicle button
     document.getElementById('addVehicleBtn').addEventListener('click', addVehicleRow);
+    document.getElementById('saveHotlistBtn').addEventListener('click', saveHotlistGroup);
+    document.getElementById('uploadCsvBtn').addEventListener('click', uploadCSV);
     
-    // Toggle advanced fields
-    document.getElementById('toggleAdvancedFields').addEventListener('click', toggleAdvancedFields);
-    
-    // CSV functionality
-    document.getElementById('csvFile').addEventListener('change', handleCsvFileSelect);
-    document.getElementById('importCsvBtn').addEventListener('click', importCsvData);
-    
-    // Reset form when modal closes
-    document.getElementById('hotlistGroupModal').addEventListener('hidden.bs.modal', function () {
-        resetHotlistGroupForm();
+    // Reset form when modal is hidden
+    document.getElementById('hotlistModal').addEventListener('hidden.bs.modal', function () {
+        resetForm();
     });
-    
-    // Add initial vehicle row
-    addVehicleRow();
 });
 
-async function loadHotlistGroups() {
-    try {
-        const search = document.getElementById('searchInput').value;
-        const category = document.getElementById('categoryFilter').value;
-        const status = document.getElementById('statusFilter').value;
-        
-        let url = '/api/hotlist-groups';
-        const params = new URLSearchParams();
-        
-        if (search) params.append('search', search);
-        if (params.toString()) url += '?' + params.toString();
-        
-        const response = await axios.get(url);
-        let hotlistGroups = response.data;
-        
-        // Filter by category and status on frontend
-        if (category) {
-            hotlistGroups = hotlistGroups.filter(h => h.category === category);
-        }
-        if (status) {
-            hotlistGroups = hotlistGroups.filter(h => status === 'active' ? h.is_active : !h.is_active);
-        }
-        
-        const tableBody = document.getElementById('hotlistsTable');
-        
-        if (hotlistGroups.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hotlist groups found</td></tr>';
-            return;
-        }
-        
-        tableBody.innerHTML = hotlistGroups.map(group => `
-            <tr>
-                <td><strong>${group.name}</strong></td>
-                <td>
-                    <span class="badge bg-${getCategoryColor(group.category)}">${group.category}</span>
-                </td>
-                <td>
-                    <span class="badge bg-${getPriorityColor(group.priority)}">${group.priority}</span>
-                </td>
-                <td>${group.description}</td>
-                <td>
-                    <div class="d-flex flex-wrap gap-1">
-                        ${group.vehicles.map(vehicle => `
-                            <span class="badge bg-primary" title="${vehicle.vehicle_make || ''} ${vehicle.vehicle_model || ''} ${vehicle.vehicle_color || ''}">
-                                ${vehicle.license_plate}
-                            </span>
-                        `).join('')}
-                    </div>
-                </td>
-                <td>${formatDate(group.created_at)}</td>
-                <td>
-                    <span class="badge bg-${group.is_active ? 'success' : 'secondary'}">
-                        ${group.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editHotlistGroup(${group.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHotlistGroup(${group.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-        
-    } catch (error) {
-        console.error('Error loading hotlists:', error);
-        showAlert('Error loading hotlists', 'danger');
-    }
-}
-
-// Load hotlist groups for CSV upload dropdown
-async function loadHotlistGroupsForCsv() {
-    try {
-        const response = await axios.get('/api/hotlist-groups');
-        const select = document.getElementById('csvHotlistSelect');
-        
-        select.innerHTML = '<option value="">Select a hotlist group...</option>';
-        response.data.forEach(group => {
-            select.innerHTML += `<option value="${group.id}">${group.name} (${group.category})</option>`;
+function loadHotlistGroups() {
+    axios.get('/api/hotlist-groups')
+        .then(response => {
+            const hotlists = response.data;
+            const tbody = document.getElementById('hotlistsTableBody');
+            tbody.innerHTML = '';
+            
+            let totalGroups = 0;
+            let totalVehicles = 0;
+            let lastUpdated = null;
+            
+            hotlists.forEach(hotlist => {
+                if (hotlist.is_active) totalGroups++;
+                totalVehicles += hotlist.vehicles.length;
+                if (!lastUpdated || new Date(hotlist.updated_at) > new Date(lastUpdated)) {
+                    lastUpdated = hotlist.updated_at;
+                }
+                
+                const row = document.createElement('tr');
+                const statusBadge = hotlist.is_active ? 
+                    '<span class="badge bg-success">Active</span>' : 
+                    '<span class="badge bg-secondary">Inactive</span>';
+                
+                row.innerHTML = `
+                    <td><strong>${hotlist.name}</strong></td>
+                    <td><span class="badge bg-primary">${hotlist.vehicles.length}</span></td>
+                    <td>${statusBadge}</td>
+                    <td>${new Date(hotlist.created_at).toLocaleDateString()}</td>
+                    <td>${new Date(hotlist.updated_at).toLocaleDateString()}</td>
+                    <td><span class="badge bg-info">${hotlist.revision}</span></td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" onclick="viewHotlist(${hotlist.id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-success" onclick="editHotlist(${hotlist.id})" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="exportToCSV(${hotlist.id})" title="Export CSV">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="uploadToGroup(${hotlist.id})" title="Upload CSV">
+                                <i class="fas fa-upload"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteHotlist(${hotlist.id})" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Update statistics
+            document.getElementById('totalGroupsCount').textContent = totalGroups;
+            document.getElementById('totalVehiclesCount').textContent = totalVehicles;
+            document.getElementById('lastUpdated').textContent = lastUpdated ? 
+                new Date(lastUpdated).toLocaleDateString() : 'Never';
+        })
+        .catch(error => {
+            console.error('Error loading hotlist groups:', error);
+            showAlert('Error loading hotlist groups: ' + (error.response?.data?.detail || error.message), 'danger');
         });
-    } catch (error) {
-        console.error('Error loading hotlist groups for CSV:', error);
-    }
 }
 
-// Toggle advanced fields visibility
-function toggleAdvancedFields() {
-    showAdvancedFields = !showAdvancedFields;
-    const advancedFields = document.querySelectorAll('.advanced-field');
-    const btn = document.getElementById('toggleAdvancedFields');
-    
-    advancedFields.forEach(field => {
-        if (showAdvancedFields) {
-            field.classList.remove('d-none');
-        } else {
-            field.classList.add('d-none');
-        }
-    });
-    
-    btn.innerHTML = showAdvancedFields 
-        ? '<i class="fas fa-cog me-1"></i>Hide Advanced' 
-        : '<i class="fas fa-cog me-1"></i>Advanced Fields';
-}
-
-// Add vehicle row to the grid
 function addVehicleRow() {
-    const tbody = document.getElementById('vehicleGridBody');
-    const vehicleId = vehicleCounter++;
+    vehicleCounter++;
+    const vehicleId = vehicleCounter;
     
+    const tbody = document.getElementById('vehicleGridBody');
     const row = document.createElement('tr');
-    row.id = `vehicle-row-${vehicleId}`;
+    row.id = `vehicleRow-${vehicleId}`;
+    
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" id="licensePlate-${vehicleId}" required placeholder="AB12 CDE" tabindex="${vehicleId * 10 + 1}"></td>
-        <td><input type="text" class="form-control form-control-sm" id="vehicleMake-${vehicleId}" placeholder="Ford" tabindex="${vehicleId * 10 + 2}"></td>
-        <td><input type="text" class="form-control form-control-sm" id="vehicleModel-${vehicleId}" placeholder="Focus" tabindex="${vehicleId * 10 + 3}"></td>
-        <td><input type="text" class="form-control form-control-sm" id="vehicleColor-${vehicleId}" placeholder="Blue" tabindex="${vehicleId * 10 + 4}"></td>
+        <!-- Core Vehicle Info -->
+        <td><input type="text" class="form-control form-control-sm" id="licensePlate-${vehicleId}" placeholder="AB12 CDE" required maxlength="10" tabindex="${vehicleId * 20 + 1}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="vehicleMake-${vehicleId}" placeholder="Ford" maxlength="50" tabindex="${vehicleId * 20 + 2}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="vehicleModel-${vehicleId}" placeholder="Focus" maxlength="50" tabindex="${vehicleId * 20 + 3}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="vehicleColor-${vehicleId}" placeholder="Blue" maxlength="30" tabindex="${vehicleId * 20 + 4}"></td>
+        
+        <!-- Intelligence Fields -->
+        <td><input type="text" class="form-control form-control-sm" id="warningMarkers-${vehicleId}" placeholder="Armed" maxlength="100" tabindex="${vehicleId * 20 + 5}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="nimCode-${vehicleId}" placeholder="1.1.1" maxlength="20" tabindex="${vehicleId * 20 + 6}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="intelligenceInfo-${vehicleId}" placeholder="Stop and question" tabindex="${vehicleId * 20 + 7}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="forceArea-${vehicleId}" placeholder="Metropolitan" maxlength="50" tabindex="${vehicleId * 20 + 8}"></td>
+        
+        <!-- System Fields -->
+        <td><input type="date" class="form-control form-control-sm" id="weedDate-${vehicleId}" tabindex="${vehicleId * 20 + 9}"></td>
+        <td><input type="text" class="form-control form-control-sm" id="pncId-${vehicleId}" placeholder="PNC123456" maxlength="50" tabindex="${vehicleId * 20 + 10}"></td>
+        <td><select class="form-select form-select-sm" id="gpmsMarking-${vehicleId}" tabindex="${vehicleId * 20 + 11}">
+            <option value="Unclassified" selected>Unclassified</option>
+            <option value="Restricted">Restricted</option>
+            <option value="Confidential">Confidential</option>
+            <option value="Secret">Secret</option>
+        </select></td>
+        <td><input type="text" class="form-control form-control-sm" id="cadInfo-${vehicleId}" placeholder="CAD ref 12345" maxlength="200" tabindex="${vehicleId * 20 + 12}"></td>
+        
+        <!-- Operational Fields -->
+        <td><textarea class="form-control form-control-sm" id="operationalInstructions-${vehicleId}" placeholder="Approach with caution" rows="1" tabindex="${vehicleId * 20 + 13}"></textarea></td>
+        <td><input type="text" class="form-control form-control-sm" id="sourceRef-${vehicleId}" placeholder="Op EXAMPLE" maxlength="100" tabindex="${vehicleId * 20 + 14}"></td>
+        
         <td>
-            <select class="form-select form-select-sm" id="bodyType-${vehicleId}" tabindex="${vehicleId * 10 + 5}">
-                <option value="">Select</option>
-                <option value="Saloon">Saloon</option>
-                <option value="Hatchback">Hatchback</option>
-                <option value="Estate">Estate</option>
-                <option value="SUV">SUV</option>
-                <option value="Van">Van</option>
-                <option value="Motorcycle">Motorcycle</option>
-            </select>
-        </td>
-        <td>
-            <select class="form-select form-select-sm" id="fuelType-${vehicleId}" tabindex="${vehicleId * 10 + 6}">
-                <option value="">Select</option>
-                <option value="Petrol">Petrol</option>
-                <option value="Diesel">Diesel</option>
-                <option value="Electric">Electric</option>
-                <option value="Hybrid">Hybrid</option>
-            </select>
-        </td>
-        <!-- Advanced fields -->
-        <td class="advanced-field d-none"><input type="text" class="form-control form-control-sm" id="vinNumber-${vehicleId}" placeholder="VIN" tabindex="${vehicleId * 10 + 7}"></td>
-        <td class="advanced-field d-none"><input type="text" class="form-control form-control-sm" id="warningMarkers-${vehicleId}" placeholder="FIREARMS" tabindex="${vehicleId * 10 + 8}"></td>
-        <td class="advanced-field d-none"><input type="text" class="form-control form-control-sm" id="intelligenceInformation-${vehicleId}" placeholder="Intelligence notes" tabindex="${vehicleId * 10 + 9}"></td>
-        <td class="advanced-field d-none"><input type="text" class="form-control form-control-sm" id="forceArea-${vehicleId}" placeholder="Force" tabindex="${vehicleId * 10 + 10}"></td>
-        <td>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVehicleRow(${vehicleId})">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVehicleRow(${vehicleId})" title="Remove Vehicle">
                 <i class="fas fa-trash"></i>
             </button>
         </td>
@@ -507,361 +406,222 @@ function addVehicleRow() {
     document.getElementById(`licensePlate-${vehicleId}`).focus();
 }
 
-// Remove vehicle row
 function removeVehicleRow(vehicleId) {
-    const row = document.getElementById(`vehicle-row-${vehicleId}`);
+    const row = document.getElementById(`vehicleRow-${vehicleId}`);
     if (row) {
         row.remove();
     }
 }
 
-// CSV Upload functionality
-function handleCsvFileSelect(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+function collectVehicleData() {
+    const vehicles = [];
+    const vehicleRows = document.querySelectorAll('#vehicleGridBody tr');
     
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const csv = e.target.result;
-        const lines = csv.split('\n').filter(line => line.trim());
+    vehicleRows.forEach(row => {
+        const vehicleId = row.id.split('-')[1];
+        const licensePlate = document.getElementById(`licensePlate-${vehicleId}`)?.value.trim();
         
-        if (lines.length === 0) {
-            showAlert('CSV file is empty', 'danger');
-            return;
+        if (licensePlate) {
+            const vehicle = {
+                license_plate: licensePlate,
+                vehicle_make: document.getElementById(`vehicleMake-${vehicleId}`)?.value.trim() || null,
+                vehicle_model: document.getElementById(`vehicleModel-${vehicleId}`)?.value.trim() || null,
+                vehicle_color: document.getElementById(`vehicleColor-${vehicleId}`)?.value.trim() || null,
+                warning_markers: document.getElementById(`warningMarkers-${vehicleId}`)?.value.trim() || null,
+                nim_code: document.getElementById(`nimCode-${vehicleId}`)?.value.trim() || null,
+                intelligence_information: document.getElementById(`intelligenceInfo-${vehicleId}`)?.value.trim() || null,
+                force_area: document.getElementById(`forceArea-${vehicleId}`)?.value.trim() || null,
+                weed_date: document.getElementById(`weedDate-${vehicleId}`)?.value || null,
+                pnc_id: document.getElementById(`pncId-${vehicleId}`)?.value.trim() || null,
+                gpms_marking: document.getElementById(`gpmsMarking-${vehicleId}`)?.value || "Unclassified",
+                cad_information: document.getElementById(`cadInfo-${vehicleId}`)?.value.trim() || null,
+                operational_instructions: document.getElementById(`operationalInstructions-${vehicleId}`)?.value.trim() || null,
+                source_reference: document.getElementById(`sourceRef-${vehicleId}`)?.value.trim() || null
+            };
+            vehicles.push(vehicle);
         }
-        
-        displayCsvPreview(lines);
+    });
+    
+    return vehicles;
+}
+
+function saveHotlistGroup() {
+    const groupName = document.getElementById('groupName').value.trim();
+    const isActive = document.getElementById('isActive').checked;
+    
+    if (!groupName) {
+        showAlert('Please enter a group name', 'warning');
+        return;
+    }
+    
+    const vehicles = collectVehicleData();
+    
+    if (vehicles.length === 0) {
+        showAlert('Please add at least one vehicle with a license plate', 'warning');
+        return;
+    }
+    
+    const hotlistData = {
+        name: groupName,
+        is_active: isActive,
+        vehicles: vehicles
     };
-    reader.readAsText(file);
-}
-
-function displayCsvPreview(lines) {
-    const hasHeaders = document.getElementById('csvHasHeaders').checked;
-    const previewDiv = document.getElementById('csvPreview');
-    const table = document.getElementById('csvPreviewTable');
-    const mappingContainer = document.getElementById('columnMappingContainer');
     
-    previewDiv.classList.remove('d-none');
+    console.log('Saving hotlist group:', hotlistData);
     
-    // Parse CSV data
-    const data = lines.map(line => line.split(',').map(cell => cell.trim().replace(/^"(.*)"$/, '$1')));
-    const headers = hasHeaders ? data[0] : data[0].map((_, i) => `Column ${i + 1}`);
-    const rows = hasHeaders ? data.slice(1, 6) : data.slice(0, 5); // Show first 5 data rows
+    const url = editingHotlistId ? `/api/hotlist-groups/${editingHotlistId}` : '/api/hotlist-groups';
+    const method = editingHotlistId ? 'put' : 'post';
     
-    // Display preview table
-    table.innerHTML = `
-        <thead>
-            <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-        </thead>
-        <tbody>
-            ${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
-        </tbody>
-    `;
-    
-    // Create column mapping
-    const fieldMappings = [
-        { key: 'license_plate', label: 'License Plate (Required)', required: true },
-        { key: 'vehicle_make', label: 'Vehicle Make' },
-        { key: 'vehicle_model', label: 'Vehicle Model' },
-        { key: 'vehicle_color', label: 'Vehicle Color' },
-        { key: 'vin_number', label: 'VIN Number' },
-        { key: 'fuel_type', label: 'Fuel Type' },
-        { key: 'body_type', label: 'Body Type' },
-        { key: 'warning_markers', label: 'Warning Markers' },
-        { key: 'intelligence_information', label: 'Intelligence Information' },
-        { key: 'force_area', label: 'Force Area' }
-    ];
-    
-    mappingContainer.innerHTML = fieldMappings.map(field => `
-        <div class="col-md-6 mb-2">
-            <label class="form-label small">${field.label}:</label>
-            <select class="form-select form-select-sm" id="mapping-${field.key}">
-                <option value="">-- Skip --</option>
-                ${headers.map((h, i) => {
-                    const selected = h.toLowerCase().includes(field.key.replace('_', '')) || 
-                                   h.toLowerCase() === field.key ? 'selected' : '';
-                    return `<option value="${i}" ${selected}>${h}</option>`;
-                }).join('')}
-            </select>
-        </div>
-    `).join('');
-    
-    document.getElementById('importCsvBtn').disabled = false;
-}
-
-async function importCsvData() {
-    const hotlistGroupId = document.getElementById('csvHotlistSelect').value;
-    const fileInput = document.getElementById('csvFile');
-    const hasHeaders = document.getElementById('csvHasHeaders').checked;
-    
-    if (!hotlistGroupId || !fileInput.files[0]) {
-        showAlert('Please select a hotlist group and CSV file', 'danger');
-        return;
-    }
-    
-    try {
-        const file = fileInput.files[0];
-        const csv = await file.text();
-        const lines = csv.split('\n').filter(line => line.trim());
-        const data = lines.map(line => line.split(',').map(cell => cell.trim().replace(/^"(.*)"$/, '$1')));
-        const dataRows = hasHeaders ? data.slice(1) : data;
-        
-        // Get column mappings
-        const mappings = {};
-        document.querySelectorAll('[id^="mapping-"]').forEach(select => {
-            const fieldKey = select.id.replace('mapping-', '');
-            const columnIndex = select.value;
-            if (columnIndex !== '') {
-                mappings[fieldKey] = parseInt(columnIndex);
-            }
+    axios[method](url, hotlistData)
+        .then(response => {
+            console.log('Hotlist group saved successfully:', response.data);
+            showAlert(`Hotlist group "${groupName}" saved successfully with ${vehicles.length} vehicles`, 'success');
+            
+            // Close modal and reload data
+            const modal = bootstrap.Modal.getInstance(document.getElementById('hotlistModal'));
+            modal.hide();
+            loadHotlistGroups();
+        })
+        .catch(error => {
+            console.error('Error saving hotlist group:', error);
+            showAlert('Error saving hotlist group: ' + (error.response?.data?.detail || error.message), 'danger');
         });
-        
-        // Validate required fields
-        if (mappings.license_plate === undefined) {
-            showAlert('License Plate mapping is required', 'danger');
-            return;
-        }
-        
-        // Process vehicles
-        const vehicles = dataRows.map(row => {
-            const vehicle = {};
-            Object.keys(mappings).forEach(fieldKey => {
-                const columnIndex = mappings[fieldKey];
-                if (row[columnIndex]) {
-                    vehicle[fieldKey] = row[columnIndex];
-                }
-            });
-            return vehicle;
-        }).filter(v => v.license_plate); // Only include rows with license plates
-        
-        if (vehicles.length === 0) {
-            showAlert('No valid vehicles found in CSV', 'danger');
-            return;
-        }
-        
-        // Import vehicles
-        document.getElementById('importCsvBtn').disabled = true;
-        document.getElementById('importCsvBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
-        
-        for (const vehicle of vehicles) {
-            vehicle.hotlist_group_id = parseInt(hotlistGroupId);
-            await axios.post('/api/vehicles', vehicle);
-        }
-        
-        showAlert(`Successfully imported ${vehicles.length} vehicles`, 'success');
-        bootstrap.Modal.getInstance(document.getElementById('csvUploadModal')).hide();
-        loadHotlistGroups();
-        
-    } catch (error) {
-        console.error('Error importing CSV:', error);
-        showAlert('Error importing CSV: ' + (error.response?.data?.detail || error.message), 'danger');
-    } finally {
-        document.getElementById('importCsvBtn').disabled = false;
-        document.getElementById('importCsvBtn').innerHTML = 'Import Vehicles';
-    }
 }
 
-function showCsvFormat() {
-    bootstrap.Modal.getInstance(document.getElementById('csvUploadModal')).hide();
-    new bootstrap.Modal(document.getElementById('csvFormatModal')).show();
-}
-
-async function saveHotlistGroup() {
-    const form = document.getElementById('hotlistGroupForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
+function editHotlist(hotlistId) {
+    editingHotlistId = hotlistId;
     
-    try {
-        // Collect basic hotlist group data
-        const hotlistData = {
-            name: document.getElementById('hotlistName').value,
-            description: document.getElementById('description').value,
-            category: document.getElementById('category').value,
-            priority: document.getElementById('priority').value,
-            created_by: document.getElementById('createdBy').value,
-            is_active: document.getElementById('isActive').checked,
-            expiry_date: document.getElementById('expiryDate').value || null
-        };
-        
-        // Collect vehicles from grid
-        const vehicles = [];
-        const vehicleRows = document.querySelectorAll('#vehicleGridBody tr');
-        
-        vehicleRows.forEach((row, index) => {
-            const licensePlate = row.querySelector(`input[id^="licensePlate-"]`)?.value;
-            if (licensePlate) {
-                const vehicleId = row.id.split('-')[2];
-                const vehicle = {
-                    license_plate: licensePlate,
-                    vehicle_make: document.getElementById(`vehicleMake-${vehicleId}`)?.value || null,
-                    vehicle_model: document.getElementById(`vehicleModel-${vehicleId}`)?.value || null,
-                    vehicle_color: document.getElementById(`vehicleColor-${vehicleId}`)?.value || null,
-                    body_type: document.getElementById(`bodyType-${vehicleId}`)?.value || null,
-                    fuel_type: document.getElementById(`fuelType-${vehicleId}`)?.value || null,
-                    vin_number: document.getElementById(`vinNumber-${vehicleId}`)?.value || null,
-                    warning_markers: document.getElementById(`warningMarkers-${vehicleId}`)?.value || null,
-                    intelligence_information: document.getElementById(`intelligenceInformation-${vehicleId}`)?.value || null,
-                    force_area: document.getElementById(`forceArea-${vehicleId}`)?.value || null
-                };
-                vehicles.push(vehicle);
-            }
-        });
-        
-        hotlistData.vehicles = vehicles;
-        
-        let response;
-        if (currentHotlistGroupId) {
-            response = await axios.put(`/api/hotlist-groups/${currentHotlistGroupId}`, hotlistData);
-        } else {
-            response = await axios.post('/api/hotlist-groups', hotlistData);
-        }
-        
-        showAlert('Hotlist group saved successfully', 'success');
-        bootstrap.Modal.getInstance(document.getElementById('hotlistGroupModal')).hide();
-        loadHotlistGroups();
-        
-    } catch (error) {
-        console.error('Error saving hotlist group:', error);
-        showAlert('Error saving hotlist group: ' + (error.response?.data?.detail || error.message), 'danger');
-    }
-}
-
-async function editHotlistGroup(id) {
-    try {
-        const response = await axios.get(`/api/hotlist-groups/${id}`);
-        const group = response.data;
-        
-        currentHotlistGroupId = id;
-        document.getElementById('modalTitle').textContent = 'Edit Hotlist Group';
-        
-        // Populate basic fields
-        document.getElementById('hotlistName').value = group.name;
-        document.getElementById('description').value = group.description;
-        document.getElementById('category').value = group.category;
-        document.getElementById('priority').value = group.priority;
-        document.getElementById('createdBy').value = group.created_by;
-        document.getElementById('isActive').checked = group.is_active;
-        
-        if (group.expiry_date) {
-            const date = new Date(group.expiry_date);
-            document.getElementById('expiryDate').value = date.toISOString().slice(0, 16);
-        }
-        
-        // Clear existing vehicle rows
-        document.getElementById('vehicleGridBody').innerHTML = '';
-        vehicleCounter = 0;
-        
-        // Add vehicle rows
-        if (group.vehicles && group.vehicles.length > 0) {
-            group.vehicles.forEach(vehicle => {
+    axios.get(`/api/hotlist-groups/${hotlistId}`)
+        .then(response => {
+            const hotlist = response.data;
+            
+            // Populate form
+            document.getElementById('groupName').value = hotlist.name;
+            document.getElementById('isActive').checked = hotlist.is_active;
+            
+            // Update modal title
+            document.getElementById('hotlistModalLabel').textContent = `Edit Hotlist Group: ${hotlist.name}`;
+            
+            // Clear existing vehicle rows
+            document.getElementById('vehicleGridBody').innerHTML = '';
+            vehicleCounter = 0;
+            
+            // Add vehicles
+            hotlist.vehicles.forEach(vehicle => {
                 addVehicleRow();
-                const vehicleId = vehicleCounter - 1;
+                const vehicleId = vehicleCounter;
                 
                 // Populate vehicle data
                 document.getElementById(`licensePlate-${vehicleId}`).value = vehicle.license_plate || '';
                 document.getElementById(`vehicleMake-${vehicleId}`).value = vehicle.vehicle_make || '';
                 document.getElementById(`vehicleModel-${vehicleId}`).value = vehicle.vehicle_model || '';
                 document.getElementById(`vehicleColor-${vehicleId}`).value = vehicle.vehicle_color || '';
-                document.getElementById(`bodyType-${vehicleId}`).value = vehicle.body_type || '';
-                document.getElementById(`fuelType-${vehicleId}`).value = vehicle.fuel_type || '';
-                
-                if (showAdvancedFields) {
-                    document.getElementById(`vinNumber-${vehicleId}`).value = vehicle.vin_number || '';
-                    document.getElementById(`warningMarkers-${vehicleId}`).value = vehicle.warning_markers || '';
-                    document.getElementById(`intelligenceInformation-${vehicleId}`).value = vehicle.intelligence_information || '';
-                    document.getElementById(`forceArea-${vehicleId}`).value = vehicle.force_area || '';
-                }
+                document.getElementById(`warningMarkers-${vehicleId}`).value = vehicle.warning_markers || '';
+                document.getElementById(`nimCode-${vehicleId}`).value = vehicle.nim_code || '';
+                document.getElementById(`intelligenceInfo-${vehicleId}`).value = vehicle.intelligence_information || '';
+                document.getElementById(`forceArea-${vehicleId}`).value = vehicle.force_area || '';
+                document.getElementById(`weedDate-${vehicleId}`).value = vehicle.weed_date || '';
+                document.getElementById(`pncId-${vehicleId}`).value = vehicle.pnc_id || '';
+                document.getElementById(`gpmsMarking-${vehicleId}`).value = vehicle.gpms_marking || 'Unclassified';
+                document.getElementById(`cadInfo-${vehicleId}`).value = vehicle.cad_information || '';
+                document.getElementById(`operationalInstructions-${vehicleId}`).value = vehicle.operational_instructions || '';
+                document.getElementById(`sourceRef-${vehicleId}`).value = vehicle.source_reference || '';
             });
-        } else {
-            addVehicleRow();
-        }
-        
-        new bootstrap.Modal(document.getElementById('hotlistGroupModal')).show();
-        
-    } catch (error) {
-        console.error('Error loading hotlist group:', error);
-        showAlert('Error loading hotlist group', 'danger');
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('hotlistModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error loading hotlist for editing:', error);
+            showAlert('Error loading hotlist: ' + (error.response?.data?.detail || error.message), 'danger');
+        });
+}
+
+function viewHotlist(hotlistId) {
+    window.open(`/api/hotlist-groups/${hotlistId}`, '_blank');
+}
+
+function deleteHotlist(hotlistId) {
+    if (confirm('Are you sure you want to delete this hotlist group? This action cannot be undone.')) {
+        axios.delete(`/api/hotlist-groups/${hotlistId}`)
+            .then(response => {
+                showAlert('Hotlist group deleted successfully', 'success');
+                loadHotlistGroups();
+            })
+            .catch(error => {
+                console.error('Error deleting hotlist:', error);
+                showAlert('Error deleting hotlist: ' + (error.response?.data?.detail || error.message), 'danger');
+            });
     }
 }
 
-async function deleteHotlistGroup(id) {
-    if (!confirm('Are you sure you want to delete this hotlist group? This action cannot be undone.')) {
+function exportToCSV(hotlistId) {
+    window.open(`/api/hotlist-groups/${hotlistId}/export-csv`, '_blank');
+}
+
+function exportAllToCSV() {
+    window.open('/api/hotlist-groups/export-all-csv', '_blank');
+}
+
+function uploadToGroup(hotlistId) {
+    document.getElementById('uploadHotlistId').value = hotlistId;
+    const modal = new bootstrap.Modal(document.getElementById('csvUploadModal'));
+    modal.show();
+}
+
+function uploadCSV() {
+    const fileInput = document.getElementById('csvFile');
+    const hotlistId = document.getElementById('uploadHotlistId').value;
+    
+    if (!fileInput.files[0]) {
+        showAlert('Please select a CSV file', 'warning');
         return;
     }
     
-    try {
-        await axios.delete(`/api/hotlist-groups/${id}`);
-        showAlert('Hotlist group deleted successfully', 'success');
-        loadHotlistGroups();
-    } catch (error) {
-        console.error('Error deleting hotlist group:', error);
-        showAlert('Error deleting hotlist group', 'danger');
-    }
-}
-
-function resetHotlistGroupForm() {
-    currentHotlistGroupId = null;
-    document.getElementById('modalTitle').textContent = 'Add Hotlist Group';
-    document.getElementById('hotlistGroupForm').reset();
-    document.getElementById('vehicleGridBody').innerHTML = '';
-    vehicleCounter = 0;
-    addVehicleRow();
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
     
-    // Reset advanced fields
-    showAdvancedFields = false;
-    document.querySelectorAll('.advanced-field').forEach(field => field.classList.add('d-none'));
-    document.getElementById('toggleAdvancedFields').innerHTML = '<i class="fas fa-cog me-1"></i>Advanced Fields';
-}
-
-// Helper functions
-function getCategoryColor(category) {
-    const colors = {
-        'stolen': 'danger',
-        'wanted': 'warning',
-        'bolo': 'info',
-        'suspicious': 'secondary'
-    };
-    return colors[category] || 'primary';
-}
-
-function getPriorityColor(priority) {
-    const colors = {
-        'low': 'secondary',
-        'medium': 'primary',
-        'high': 'warning',
-        'critical': 'danger'
-    };
-    return colors[priority] || 'primary';
-}
-
-function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString('en-GB', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+    axios.post(`/api/hotlist-groups/${hotlistId}/upload-csv`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    .then(response => {
+        showAlert('CSV uploaded successfully', 'success');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('csvUploadModal'));
+        modal.hide();
+        loadHotlistGroups();
+    })
+    .catch(error => {
+        console.error('Error uploading CSV:', error);
+        showAlert('Error uploading CSV: ' + (error.response?.data?.detail || error.message), 'danger');
     });
 }
 
-function showAlert(message, type = 'info') {
-    // Create alert element
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    alertDiv.innerHTML = `
+function resetForm() {
+    editingHotlistId = null;
+    document.getElementById('hotlistForm').reset();
+    document.getElementById('hotlistModalLabel').textContent = 'Create New Hotlist Group';
+    document.getElementById('vehicleGridBody').innerHTML = '';
+    vehicleCounter = 0;
+    document.getElementById('isActive').checked = true;
+}
+
+function showAlert(message, type) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
         ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
+    alertContainer.appendChild(alert);
     
-    document.body.appendChild(alertDiv);
-    
-    // Auto remove after 5 seconds
+    // Auto-dismiss after 5 seconds
     setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
+        if (alert.parentNode) {
+            alert.remove();
         }
     }, 5000);
 }
