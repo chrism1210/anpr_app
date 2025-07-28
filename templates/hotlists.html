@@ -153,7 +153,7 @@
 
 <!-- Create/Edit Hotlist Modal -->
 <div class="modal fade" id="hotlistModal" tabindex="-1" aria-labelledby="hotlistModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog" style="max-width: 95vw; width: 95vw;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="hotlistModalLabel">Create New Hotlist Group</h5>
@@ -190,34 +190,34 @@
                         </div>
                     </div>
                     
-                    <!-- Vehicle Grid Table - All 16 fields visible -->
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-sm table-bordered" id="vehicleGrid">
+                    <!-- Vehicle Grid Table - All 16 fields visible with improved spacing -->
+                    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-bordered" id="vehicleGrid" style="min-width: 2000px;">
                             <thead class="table-light sticky-top">
                                 <tr>
                                     <!-- Core Vehicle Info (4 fields) -->
-                                    <th style="width: 120px;">VRM * <small class="text-muted">(Reg Mark)</small></th>
-                                    <th style="width: 100px;">Make</th>
-                                    <th style="width: 100px;">Model</th>
-                                    <th style="width: 80px;">Colour</th>
+                                    <th style="width: 150px;">VRM * <small class="text-muted d-block">(Registration Mark)</small></th>
+                                    <th style="width: 130px;">Make</th>
+                                    <th style="width: 130px;">Model</th>
+                                    <th style="width: 120px;">Colour</th>
                                     
                                     <!-- Intelligence Fields (4 fields) -->
-                                    <th style="width: 120px;">Warning Markers</th>
-                                    <th style="width: 100px;">NIM Code <small class="text-muted">(5x5x5)</small></th>
-                                    <th style="width: 150px;">Intelligence Info</th>
-                                    <th style="width: 100px;">Force & Area</th>
+                                    <th style="width: 140px;">Warning Markers</th>
+                                    <th style="width: 120px;">NIM Code <small class="text-muted d-block">(5x5x5 Format)</small></th>
+                                    <th style="width: 180px;">Intelligence Info</th>
+                                    <th style="width: 130px;">Force & Area</th>
                                     
                                     <!-- System Fields (4 fields) -->
-                                    <th style="width: 110px;">Weed Date</th>
-                                    <th style="width: 100px;">PNC ID</th>
-                                    <th style="width: 100px;">GPMS Marking</th>
-                                    <th style="width: 150px;">CAD Information</th>
+                                    <th style="width: 130px;">Weed Date <small class="text-muted d-block">(YYYY-MM-DD)</small></th>
+                                    <th style="width: 120px;">PNC ID</th>
+                                    <th style="width: 130px;">GPMS Marking</th>
+                                    <th style="width: 180px;">CAD Information</th>
                                     
                                     <!-- Operational Fields (4 fields) -->
-                                    <th style="width: 150px;">Operational Instructions</th>
-                                    <th style="width: 120px;">Source Reference</th>
+                                    <th style="width: 200px;">Operational Instructions</th>
+                                    <th style="width: 150px;">Source Reference</th>
                                     
-                                    <th style="width: 60px;">Actions</th>
+                                    <th style="width: 80px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="vehicleGridBody">

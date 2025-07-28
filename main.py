@@ -308,7 +308,7 @@ async def upload_csv_to_hotlist(
         
         # Parse CSV
         csv_reader = csv.DictReader(io.StringIO(content_str))
-        vehicles_added = 0
+        vehicles_added = 0;
         
         for row in csv_reader:
             # Clean up the row data
@@ -482,7 +482,7 @@ async def get_hotlist_status(
         
         # Update latest revision from group
         revision.latest_revision = group.revision
-        db.commit()
+        db.commit();
         
         result.append(BofHotlistRevisions(
             hotlist_name=hotlist_name,
@@ -808,7 +808,8 @@ async def bof_send_compact_capture(
         return BofCaptureResponse(
             status="success",
             message=f"Compact capture processed successfully for plate {vrm}",
-            read_id=anpr_read.id
+            read_id=anpr_read.id,
+            nsuccess=1  # <-- Add this line
         )
         
     except ValueError as e:
@@ -1020,4 +1021,4 @@ async def get_connectivity_status():
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host="0.0.0.0", port=8000)
