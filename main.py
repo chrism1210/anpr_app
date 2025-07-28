@@ -734,7 +734,7 @@ async def bof_send_capture(
         logger.info(f"BOF sendCapture: Created ANPR read for plate {request.vrm}")
         
         return BofCaptureResponse(
-            status="success",
+            success=True,
             message=f"Capture processed successfully for plate {request.vrm}",
             read_id=anpr_read.id
         )
@@ -806,10 +806,9 @@ async def bof_send_compact_capture(
         logger.info(f"BOF sendCompactCapture: Created ANPR read for plate {vrm}")
         
         return BofCaptureResponse(
-            status="success",
+            success=True,
             message=f"Compact capture processed successfully for plate {vrm}",
-            read_id=anpr_read.id,
-            nsuccess=1  # <-- Add this line
+            read_id=anpr_read.id
         )
         
     except ValueError as e:
@@ -884,7 +883,7 @@ async def bof_send_compound_capture(
         logger.info(f"BOF sendCompoundCapture: Created {len(created_reads)} ANPR reads")
         
         return BofCaptureResponse(
-            status="success",
+            success=True,
             message=f"Compound capture processed successfully. Created {len(created_reads)} reads",
             read_id=None
         )
@@ -975,7 +974,7 @@ async def bof_add_binary_capture_data(
                 raise HTTPException(status_code=500, detail=f"Error saving binary image: {str(e)}")
         
         return BofCaptureResponse(
-            status="success",
+            success=True,
             message=f"Binary capture data processed successfully for plate {request.vrm}",
             read_id=anpr_read.id
         )
